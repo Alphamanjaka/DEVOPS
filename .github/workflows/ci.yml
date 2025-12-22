@@ -47,12 +47,3 @@ jobs:
           
           docker build -t $IMAGE_ID:latest .
           docker push $IMAGE_ID:latest
-
-  # 3. JOB DE DEPLOIEMENT (Mise en production - CD)
-  deploiement-production:
-    runs-on: ubuntu-latest
-    needs: livraison-continue # Ne se lance que si l'image est publiée
-    steps:
-      - name: Déclenchement du déploiement sur Render
-        # Ici on simule l'appel au serveur de prod (WebHook Render)
-        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
