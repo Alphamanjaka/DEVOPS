@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev
 
 # Copier d'abord le fichier des dépendances pour utiliser le cache Docker
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
 # --- STAGE 2 : FINAL ---
 FROM python:3.12-slim
