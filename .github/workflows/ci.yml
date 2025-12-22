@@ -8,12 +8,10 @@ jobs:
     steps:
       - name: Checkout du code
         uses: actions/checkout@v3
-
-      - name: Construction de l'image Docker
-        run: docker build -t messagerie-app .
-
-      - name: Exécution des Tests dans le conteneur
-        run: docker run messagerie-app
+      - name: Build and Test
+        run: |
+              docker build -t messagerie-app .
+              docker run messagerie-app
 
   deploy: #partie CD
     needs: test
