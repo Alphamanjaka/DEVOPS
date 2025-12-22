@@ -23,9 +23,14 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v3
 
-      - name: Connexion au Github Container Registry
+      - name: Connexion au registre GitHub
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      - name: Build and Push Image (CD)
+
+      - name: Publier l'image (CD - Livraison)
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:latest .
-          docker push ghcr.io/${{ github.repository }}:latest
+          # On donne un nom pro à l'image (en minuscules)
+          IMAGE_ID=ghcr.io/${{ github.repository }}
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          
+          docker build -t $IMAGE_ID:latest .
+          docker push $IMAGE_ID:latest
