@@ -11,7 +11,9 @@ WORKDIR /app
 # Copier les dépendances et les installer
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
-
+# --- ÉTAPE CRUCIALE POUR RENDER ---
+# On prépare les fichiers statiques pour éviter les erreurs au démarrage
+RUN python manage.py collectstatic --noinput
 # Copier le reste du projet
 COPY . /app/
 
