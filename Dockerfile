@@ -11,14 +11,16 @@ WORKDIR /app
 # Copier les dépendances et les installer
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
-# --- ÉTAPE CRUCIALE POUR RENDER ---
-# On prépare les fichiers statiques pour éviter les erreurs au démarrage
-RUN python manage.py collectstatic --noinput
+
 # Copier le reste du projet
 COPY . /app/
 
 # Se placer dans le dossier du projet Django (là où se trouve wsgi.py/manage.py)
 WORKDIR /app/messagerie
+
+# --- ÉTAPE CRUCIALE POUR RENDER ---
+# On prépare les fichiers statiques pour éviter les erreurs au démarrage
+RUN python manage.py collectstatic --noinput
 
 # Commande par défaut pour lancer Gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "messagerie.wsgi:application"]
