@@ -1,37 +1,50 @@
-name: Docker Django CI
+name: Pipeline Messagerie DevOps
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
 
 jobs:
-  test:
+  # 1. JOB DE TEST (L'Intégration Continue - CI)
+  integration-continue:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v3
-      - name: Build and Test
-        run: |
-              docker build -t messagerie-app .
-              docker run messagerie-app
+      - uses: actions/checkout@v4
 
-  deploy: #partie CD
-    needs: test
+      - name: Build de l'image de test
+        run: docker build -t test-image .
+
+      - name: Exécution des tests unitaires
+        run: docker run test-image python manage.py test
+
+  # 2. JOB DE LIVRAISON (Le Déploiement Continu - CD)
+  livraison-continue:
     runs-on: ubuntu-latest
-    permissions: # AJOUTEZ CE BLOC ICI
+    needs: integration-continue # IMPORTANT : Ne se lance que si les tests passent
+    permissions:
       contents: read
       packages: write
-    if: github.ref == 'refs/heads/main' && success()
+    
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Connexion au registre GitHub
+      - name: Connexion au Registry (GHCR)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Publier l'image (CD - Livraison)
+      - name: Build et Push de l'image finale
         run: |
-          # On donne un nom pro à l'image (en minuscules)
+          # Mise en minuscule du nom de l'image pour Docker
           IMAGE_ID=ghcr.io/${{ github.repository }}
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           
           docker build -t $IMAGE_ID:latest .
           docker push $IMAGE_ID:latest
+
+  # 3. JOB DE DEPLOIEMENT (Mise en production - CD)
+  deploiement-production:
+    runs-on: ubuntu-latest
+    needs: livraison-continue # Ne se lance que si l'image est publiée
+    steps:
+      - name: Déclenchement du déploiement sur Render
+        # Ici on simule l'appel au serveur de prod (WebHook Render)
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}

@@ -1,26 +1,20 @@
-# Utiliser une image Python officielle légère
 FROM python:3.12-slim
 
-# Définir des variables d'environnement pour Python
+# Empêche Python de générer des fichiers .pyc et permet l'affichage des logs en direct
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# Copier les dépendances et les installer
-COPY requirements.txt /app/
+# Copier d'abord le fichier des dépendances pour utiliser le cache Docker
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier le reste du projet
-COPY . /app/
+# Copie de tout le projet
+COPY . .
 
-# Se placer dans le dossier du projet Django (là où se trouve wsgi.py/manage.py)
+# On se place là où se trouve manage.py
 WORKDIR /app/messagerie
 
-# --- ÉTAPE CRUCIALE POUR RENDER ---
-# On prépare les fichiers statiques pour éviter les erreurs au démarrage
-RUN python manage.py collectstatic --noinput
-
-# Commande par défaut pour lancer Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "messagerie.wsgi:application"]
+# Le port doit correspondre à celui dans docker-compose.yml
+EXPOSE 8000
