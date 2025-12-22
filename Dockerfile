@@ -2,16 +2,18 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# On copie tout le contenu du dossier actuel
-COPY . .
-
+# On installe les dépendances
 RUN pip install --no-cache-dir django
 
-# On force Docker à nous dire où il est et ce qu'il voit (utile pour débugger)
-RUN ls -la
+# On copie tout le projet
+COPY . .
 
-# IMPORTANT : On change le dossier de travail pour aller là où se trouve manage.py
+# On se déplace là où se trouve manage.py
 WORKDIR /app/messagerie
 
-# Lancement des tests
-CMD ["python", "manage.py", "test"]
+# --- ÉTAPE CRUCIALE POUR RENDER ---
+# On prépare les fichiers statiques pour éviter les erreurs au démarrage
+RUN python manage.py collectstatic --noinput
+
+# On lance le serveur sur le port 10000 (standard chez Render)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:10000"]
