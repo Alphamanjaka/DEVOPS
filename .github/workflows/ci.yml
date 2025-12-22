@@ -23,7 +23,7 @@ jobs:
 
       - name: Lancement des tests avec Docker Compose
         # 'docker-compose run' démarre les dépendances ('db') et exécute la commande dans un nouveau conteneur 'web'
-        run: docker-compose run --build --rm web python manage.py test
+        run: docker compose run --build --rm web python manage.py test
 
   # 2. JOB DE LIVRAISON (Le Déploiement Continu - CD)
   livraison-continue:
