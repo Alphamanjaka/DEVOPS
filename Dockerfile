@@ -18,3 +18,6 @@ WORKDIR /app/messagerie
 
 # Le port doit correspondre à celui dans docker-compose.yml
 EXPOSE 8000
+
+# Commande de démarrage pour Render (utilise le script build.sh)
+CMD ["sh", "/app/build.sh"]
