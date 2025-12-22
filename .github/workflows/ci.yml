@@ -18,6 +18,9 @@ jobs:
   deploy: #partie CD
     needs: test
     runs-on: ubuntu-latest
+    permissions: # AJOUTEZ CE BLOC ICI
+      contents: read
+      packages: write
     if: github.ref == 'refs/heads/main' && success()
     steps:
       - name: Checkout du code
