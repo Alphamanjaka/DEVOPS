@@ -1,19 +1,22 @@
+# Utiliser une image Python officielle légère
 FROM python:3.12-slim
 
+# Définir des variables d'environnement pour Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# On installe les dépendances
-RUN pip install --no-cache-dir django
+# Copier les dépendances et les installer
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-# On copie tout le projet
-COPY . .
+# Copier le reste du projet
+COPY . /app/
 
-# On se déplace là où se trouve manage.py
+# Se placer dans le dossier du projet Django (là où se trouve wsgi.py/manage.py)
 WORKDIR /app/messagerie
 
-# --- ÉTAPE CRUCIALE POUR RENDER ---
-# On prépare les fichiers statiques pour éviter les erreurs au démarrage
-RUN python manage.py collectstatic --noinput
-
-# On lance le serveur sur le port 10000 (standard chez Render)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:10000"]
+# Commande par défaut pour lancer Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "messagerie.wsgi:application"]
