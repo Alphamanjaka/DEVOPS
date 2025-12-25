@@ -1,4 +1,3 @@
-from re import search
 from typing import Any
 from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect
@@ -51,19 +50,16 @@ class MessageListView(LoginRequiredMixin, ListView):
     context_object_name = 'messages'
     ordering = ['-date_envoi']
     paginate_by = 10
-    
+
     def get_queryset(self) -> QuerySet[Any]:
         queryset = super().get_queryset()
         search_query = self.request.GET.get('q', None)
         if search_query:
             queryset = queryset.filter(
                 Q(contenu__icontains=search_query)
-                 | Q(owner__username__icontains=search_query)
-                 ).distinct()
+                | Q(owner__username__icontains=search_query)
+            ).distinct()
         return queryset.filter(owner=self.request.user)
-    
-
-
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):

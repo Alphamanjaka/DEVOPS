@@ -4,6 +4,7 @@
 
 # Appliquer les migrations de la base de données
 echo "Applying database migrations..."
+python manage.py makemigrations
 python manage.py migrate --noinput
 
 # Collecter les fichiers statiques

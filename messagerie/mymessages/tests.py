@@ -13,8 +13,6 @@ class AccessControlTest(TestCase):
         """Un utilisateur connecté accède à la home"""
         self.client.login(username='basicuser', password='password')
         response = self.client.get(reverse('home'))
-        
-        """ Vérifie que la page se charge correctement """
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'index.html')
 
@@ -81,5 +79,41 @@ class MessageOwnershipTest(TestCase):
         # Le message
         self.message = Message.objects.create(
             contenu="My precious", owner=self.owner)
-        
+    
+    def test_owner_can_edit_delete(self):
+        """Le propriétaire peut éditer et supprimer son message"""
+        self.client.login(username='owner', password='password')
 
+        # Editer
+        response = self.client.post(reverse(
+            'message_update', kwargs={'pk': self.message.pk}), {'contenu': 'Updated'})
+        self.assertEqual(response.status_code, 302)  # Redirection après succès
+        self.message.refresh_from_db()
+        self.assertEqual(self.message.contenu, 'Updated')
+
+        # Supprimer
+        response = self.client.post(
+            reverse('message_delete', kwargs={'pk': self.message.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Message.objects.filter(pk=self.message.pk).exists())
+        
+class MessageListViewTest(TestCase):
+    def setUp(self):
+        self.user1 = User.objects.create_user(
+            username='u1', password='password')
+        self.user2 = User.objects.create_user(
+            username='u2', password='password')
+
+        Message.objects.create(contenu="Msg U1", owner=self.user1)
+        Message.objects.create(contenu="Msg U2", owner=self.user2)
+
+    def test_list_isolation(self):
+        """La vue 'message_list' ne doit montrer que les messages de l'utilisateur connecté"""
+        self.client.login(username='u1', password='password')
+        response = self.client.get(reverse('message_list'))
+
+        self.assertEqual(response.status_code, 200)
+        # Doit contenir le message de U1
+        self.assertContains(response, "Msg U1")
+        # Ne doit PAS contenir le message de U2
+        self.assertNotContains(response, "Msg U2")
