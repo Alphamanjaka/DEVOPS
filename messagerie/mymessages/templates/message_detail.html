@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>detail du message</h2>
+  <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+    <p>
+      <strong>content :</strong> {{ message.content }}
+    </p>
+    <p>
+      <strong>Date :</strong> {{ message.date_envoi }}
+    </p>
+  </div>
+
+  <div>
+    {% if user == message.owner or user.is_superuser %}
+      <a href="{% url 'message_update' message.pk %}">Edit</a> |
+      <a href="{% url 'message_delete' message.pk %}" style="color: red;">Delete</a> |
+    {% endif %}
+    <a href="{% url 'message_list' %}">Back to list</a>
+  </div>
+{% endblock %}

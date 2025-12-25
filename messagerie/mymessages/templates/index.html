@@ -1,68 +1,22 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Messagerie DevOps</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        margin: 40px;
-        background: #f4f4f4;
-        padding-bottom: 80px;
-      }
-      .container {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      }
-      input[type='text'] {
-        width: 70%;
-        padding: 10px;
-      }
-      button {
-        padding: 10px 20px;
-        background: #28a745;
-        color: white;
-        border: none;
-        cursor: pointer;
-      }
-      footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #222;
-        color: #fff;
-        text-align: center;
-        padding: 12px 0;
-        font-size: 14px;
-      }
-      .footer-content {
-        max-width: 1000px;
-        margin: 0 auto;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Ma Messagerie CI/CD</h1>
-      <form method="POST">
-        {% csrf_token %}
-        <input type="text" name="contenu" placeholder="Tapez votre message ici..." required />
-        <button type="submit">Envoyer</button>
-      </form>
-      <hr />
-      <ul>
-        {% for msg in messages_liste %}
-          <li>
-            <strong>{{ msg.date_envoi|date:'H:i' }}</strong> : {{ msg.contenu }}
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
+{% extends 'base.html' %}
 
-    <footer>
-      <div class="footer-content">© 2025 Messagerie - Développé par Naina</div>
-    </footer>
-  </body>
-</html>
+{% block content %}
+  <h1>Ma Messagerie CI/CD</h1>
+
+  {% if can_post %}
+    <form method="POST" action="{% url 'add_message' %}" style="margin-bottom: 20px;">
+      {% csrf_token %}
+      <input type="text" name="contenu" placeholder="Tapez votre message ici..." required style="width: 70%; padding: 10px;" />
+      <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer;">Envoyer</button>
+    </form>
+  {% endif %}
+
+  <hr />
+  <ul>
+    {% for msg in messages_liste %}
+      <li>
+        <strong>{{ msg.date_envoi|date:'H:i' }}</strong> : {{ msg.contenu }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

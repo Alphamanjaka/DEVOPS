@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Delete message ?</h2>
+  <p>
+    You are about to delete the message: "<em>{{ object }}</em>" ?
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px;">Delete</button>
+    <a href="{% url 'message_list' %}" style="margin-left: 10px;">Annuler</a>
+  </form>
+{% endblock %}

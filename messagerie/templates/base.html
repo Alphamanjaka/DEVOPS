@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}
+        Messagerie DevOps
+      {% endblock %}
+    </title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  </head>
+  <body>
+    <header>
+      <button class="menu-toggle" onclick="document.querySelector('aside').classList.toggle('active')">☰</button>
+      <div class="logo">
+        <a href="{% url 'home' %}">Messagerie DevOps</a>
+      </div>
+      <div class="user-menu">
+        {% if user.is_authenticated %}
+          <span>{{ user.username }}</span>
+          <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 10px;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Déconnexion</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}">Connexion</a>
+        {% endif %}
+      </div>
+    </header>
+    <div class="layout-container">
+      <aside>
+        <h3>Menu</h3>
+        <nav>
+          <a href="{% url 'home' %}">
+            <!-- Home Icon -->
+            <i class="fa-solid fa-house"></i> home
+          </a>
+          <a href="{% url 'message_list' %}">
+            <!-- Messages Icon -->
+            <i class="fa-solid fa-envelope"></i> Messages
+          </a>
+
+          {% if user.is_authenticated %}
+            <a href="{% url 'password_change' %}">
+              <!-- Lock Icon -->
+              <i class="fa-solid fa-lock"></i> Privacy
+            </a>
+          {% endif %}
+        </nav>
+      </aside>
+      <main>
+        {% block content %}
+
+        {% endblock %}
+      </main>
+    </div>
+    <footer>
+      <p>&copy; 2025 Messagerie DevOps - Tous droits réservés.</p>
+    </footer>
+  </body>
+</html>

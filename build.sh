@@ -12,4 +12,4 @@ python manage.py collectstatic --noinput
 
 # Lancer Gunicorn pour servir l'application
 echo "Starting Gunicorn..."
-gunicorn --bind 0.0.0.0:8000 messagerie.wsgi:application
+gunicorn --bind 0.0.0.0:8000 --reload messagerie.wsgi:application

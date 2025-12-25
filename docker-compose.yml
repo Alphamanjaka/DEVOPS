@@ -11,14 +11,21 @@ services:
     # La commande de démarrage est maintenant gérée par le script build.sh
     # pour s'assurer que les migrations sont appliquées avant de lancer le serveur.
     command: sh /app/build.sh
-    volumes:
-      - .:/app
     ports:
       - "8000:8000" # Expose le port 8000 du conteneur sur le port 8000 de l'hôte
     env_file:
       - ./.env
     depends_on:
       - db
+
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - .git/
+            - __pycache__/
 
 volumes:
   postgres_data:

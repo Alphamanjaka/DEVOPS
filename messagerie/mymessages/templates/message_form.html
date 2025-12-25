@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>
+    {% if object %}
+      Update
+    {% else %}
+      Create
+    {% endif %}a message
+  </h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn-primary">save</button>
+  </form>
+  <p style="margin-top:10px;">
+    <a href="{% url 'message_list' %}">Cancel</a>
+  </p>
+{% endblock %}
