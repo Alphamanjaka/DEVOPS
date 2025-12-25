@@ -4,10 +4,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from .models import Message
 
-
-
-
-
 class AccessControlTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
