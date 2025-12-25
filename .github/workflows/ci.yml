@@ -20,6 +20,7 @@ jobs:
           echo "DEBUG=1" >> .env
           echo "DB_HOST=db" >> .env
           echo "DB_PORT=5432" >> .env
+          
       - name: lancement des migrations avant les tests
         run: |
           docker compose run --build --rm web python manage.py makemigrations
