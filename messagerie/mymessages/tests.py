@@ -13,6 +13,8 @@ class AccessControlTest(TestCase):
         """Un utilisateur connecté accède à la home"""
         self.client.login(username='basicuser', password='password')
         response = self.client.get(reverse('home'))
+        
+        """ Vérifie que la page se charge correctement """
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'index.html')
 
