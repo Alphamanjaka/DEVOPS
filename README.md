@@ -1,74 +1,98 @@
-C'est parti ! Pour tenir **10 minutes**, il faut être percutant : environ 2 minutes par grande partie. Voici le plan structuré de ton exposé, étape par étape, intégrant tout le travail de haut niveau que nous avons accompli.
+# Démonstration Technique : Pipeline DevOps & Application de Messagerie
+
+Ce projet est une démonstration technique d'une chaîne **DevOps complète** appliquée à une application web Django. L'objectif est de montrer l'automatisation des tests, la conteneurisation et le déploiement continu, ainsi que des fonctionnalités applicatives spécifiques.
+
+## Architecture & Technologies
+
+- **Backend :** Django (Python) avec Gunicorn.
+- **Base de données :** PostgreSQL 15.
+- **Conteneurisation :** Docker & Docker Compose.
+- **CI/CD :** GitHub Actions.
+- **Frontend :** HTML5, CSS3 (Responsive), FontAwesome.
 
 ---
 
-## 1. Introduction et Présentation du Projet (1 min)
+## 🚀 Pipeline CI/CD (GitHub Actions)
 
-**Le Sujet :** Création d'une application de messagerie Django et mise en place d'une chaîne DevOps complète pour garantir un déploiement fiable et automatisé.
+Le workflow est défini dans `.github/workflows/ci.yml` et se divise en deux étapes majeures :
 
-**Les Technologies (Le "Stack") :**
+### 1. Intégration Continue (CI)
 
-* **Framework :** Django (Python).
-* **Base de données :** PostgreSQL (pour la persistance et la robustesse).
-* **Conteneurisation :** Docker (pour l'isolation).
-* **CI/CD :** GitHub Actions & Render.
+À chaque `push` sur la branche `main` :
 
----
+- **Environnement de Test :** Création dynamique d'un fichier `.env` sécurisé pour l'environnement de test.
+- **Dockerisation des Tests :** Utilisation de `docker compose run` pour monter les services (Postgres + Django).
+- **Exécution :** Lancement automatique des tests unitaires (`python manage.py test`).
 
-## 2. Définition des Étapes de Réalisation (2 min)
+### 2. Livraison Continue (CD)
 
-Explique au jury que tu as suivi une méthodologie en 4 phases :
+_Condition :_ Ne s'exécute que si la CI réussit.
 
-1. **Conteneurisation :** Création d'un `Dockerfile` multi-stage pour emballer l'application.
-2. **Intégration Continue (CI) :** Automatisation des tests à chaque `git push`.
-3. **Livraison Continue (CD) :** Création d'un artefact (image) stocké dans le registre GitHub (GHCR).
-4. **Déploiement & Monitoring :** Mise en ligne sur Render avec surveillance de la "santé" (Health Check).
+- **Authentification :** Connexion sécurisée au **GitHub Container Registry (GHCR)**.
+- **Build & Push :** Construction de l'image Docker de production et publication sur le registre (`ghcr.io/...`).
 
 ---
 
-## 3. Zoom Technique : Ce qui fait la différence (3 min)
+## 🐳 Configuration Docker
 
-C'est ici que tu montres ton expertise. Explique les "pépites" que nous avons ajoutées :
+L'application est entièrement conteneurisée pour garantir la cohérence entre le développement et la production.
 
-* **Le Multi-Stage Build :** "J'ai séparé la compilation de l'exécution pour réduire la taille de l'image de 50% et augmenter la sécurité."
-* **La Gestion des Secrets :** "Aucun mot de passe n'est dans le code. Tout passe par des variables d'environnement."
-* **WhiteNoise :** "L'application est autonome pour servir ses propres fichiers statiques, sans avoir besoin d'un serveur complexe supplémentaire."
-* **Le Health Check :** "Le système s'auto-surveille. Si la base PostgreSQL tombe, le Health Check alerte Render pour éviter de servir une page d'erreur aux utilisateurs."
-
----
-
-## 4. Avantages et Inconvénients (2 min)
-
-### **Les Avantages (Pourquoi on fait ça ?)**
-
-* **Fiabilité :** Si les tests échouent, le déploiement s'arrête (Fail-fast).
-* **Portabilité :** Grâce à Docker, l'app tourne à l'identique sur mon PC et sur le Cloud.
-* **Scalabilité :** Séparer l'app (Docker) de la base (Postgres) permet de faire grandir l'un sans impacter l'autre.
-
-### **Les Inconvénients (La réalité du terrain)**
-
-* **Complexité initiale :** Mettre en place la CI/CD prend plus de temps que de copier des fichiers par FTP.
-* **Coût des ressources :** Faire tourner des pipelines et des bases managées peut coûter plus cher qu'un hébergement simple.
-* **Courbe d'apprentissage :** Nécessite des compétences en Linux, Docker et réseaux.
+- **Orchestration :** Le fichier `docker-compose.yml` gère les services `db` (Postgres) et `web` (Django).
+- **Script de Démarrage (`build.sh`) :**
+  - Application automatique des migrations (`migrate`).
+  - Collecte des fichiers statiques (`collectstatic`).
+  - Création conditionnelle d'un superutilisateur.
+  - Lancement du serveur de production **Gunicorn**.
+- **Hot Reload (Dev) :** Utilisation de `develop.watch` dans Docker Compose pour synchroniser les changements de code en temps réel sans reconstruire l'image.
 
 ---
 
-## 5. Conclusion et Démonstration (2 min)
+## ✨ Fonctionnalités de l'Application
 
-**Conclusion :** > "Ce projet m'a permis de passer du rôle de développeur à celui de **DevOps**. J'ai appris que le code n'est qu'une partie du produit ; la manière dont il est testé, livré et surveillé est ce qui garantit la satisfaction de l'utilisateur final."
+### Importation de Messages (CSV)
 
-**La Démo :**
+L'application dispose d'un module d'importation de données en masse.
 
-1. Montre ton interface de messagerie en ligne.
-2. Montre le graphique "vert" des GitHub Actions.
-3. Montre les logs de Render prouvant que le Health Check est actif.
+- **Format supporté :** `Contenu du message, AAAA-MM-JJ HH:MM:SS, Username`
+- **Interface :** Formulaire dédié avec gestion des erreurs et messages flash (Succès/Avertissement/Erreur).
+
+### Interface Utilisateur (UI/UX)
+
+- **Design Responsive :** Sidebar adaptative (mobile/desktop) gérée via CSS (`style.css`).
+- **Thème :** Utilisation de variables CSS pour une maintenance facile des couleurs.
 
 ---
 
-### Conseil pour l'oral :
+## 📸 Captures d'écran
 
-Si le jury te demande : *"Pourquoi ne pas avoir utilisé SQLite en production ?"*, réponds fièrement :
+<!--
+INSTRUCTIONS POUR AJOUTER VOS IMAGES :
+1. Créez un dossier nommé "screenshots" à la racine du projet.
+2. Mettez vos images dedans (ex: pipeline.png, import.png).
+3. Décommentez les lignes ci-dessous.
+-->
 
-> "Pour respecter le principe de **Persistance des données** et de **Statelessness**. SQLite est un fichier dans le conteneur ; si le conteneur redémarre, les données sont perdues. PostgreSQL est un service externe qui garantit la survie des données."
+### Pipeline GitHub Actions
 
-**Veux-tu que je développe davantage une de ces parties ou que je te prépare une liste de questions "pièges" que le jury pourrait te poser ?**
+<!-- !Pipeline CI/CD -->
+
+_Vue du workflow réussissant les étapes de test et de déploiement._
+
+### Interface d'Import CSV
+
+<!-- !Import CSV -->
+
+_Formulaire d'importation avec feedback utilisateur._
+
+---
+
+## Comment lancer le projet en local
+
+1. **Cloner le dépôt :**
+   ```bash
+   git clone <votre-url-repo>
+   ```
+2. **Lancer avec Docker Compose :**
+   ```bash
+   docker compose up --build
+   ```
