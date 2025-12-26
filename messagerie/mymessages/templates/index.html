@@ -2,25 +2,35 @@
 
 {% block content %}
   <div style="max-width: 1000px; margin: 0 auto;">
-    <h2>Tableau de bord Global</h2>
+    <h2><i class="fa-solid fa-chart-line"></i> Tableau de bord Global</h2>
 
-    <!-- Section Graphique -->
-    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px;">
-      <h3 style="margin-top: 0;">Activité des messages (par jour)</h3>
-      <div style="position: relative; height: 300px; width: 100%;">
-        <canvas id="messagesChart"></canvas>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <!-- Section Graphique Linéaire -->
+      <div style="flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h3 style="margin-top: 0;"><i class="fa-regular fa-calendar-days"></i> Activité (par jour)</h3>
+        <div style="position: relative; height: 300px; width: 100%;">
+          <canvas id="messagesChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Section Graphique Camembert -->
+      <div style="flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h3 style="margin-top: 0;"><i class="fa-solid fa-users"></i> Répartition (par utilisateur)</h3>
+        <div style="position: relative; height: 300px; width: 100%;">
+          <canvas id="usersChart"></canvas>
+        </div>
       </div>
     </div>
 
     <!-- Section Liste des messages récents -->
-    <h3>Derniers messages</h3>
+    <h3><i class="fa-solid fa-list"></i> Derniers messages</h3>
     <ul style="list-style: none; padding: 0;">
       {% for message in messages_liste %}
         <li style="background: white; border-bottom: 1px solid #eee; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <strong>{{ message.owner.username|default:'Anonyme' }}</strong> : {{ message.contenu|truncatechars:80 }}
+            <strong><i class="fa-solid fa-user"></i> {{ message.owner.username|default:'Anonyme' }}</strong> : {{ message.contenu|truncatechars:80 }}
           </div>
-          <small style="color: #666;">{{ message.date_envoi|date:'d/m/Y H:i' }}</small>
+          <small style="color: #666;"><i class="fa-regular fa-clock"></i> {{ message.date_envoi|date:'d/m/Y H:i' }}</small>
         </li>
       {% empty %}
         <li>Aucun message pour le moment.</li>
@@ -29,7 +39,7 @@
 
     {% if can_post %}
       <div style="margin-top: 20px;">
-        <a href="{% url 'message_create' %}" class="btn-primary">Poster un nouveau message</a>
+        <a href="{% url 'message_create' %}" class="btn-primary"><i class="fa-solid fa-plus"></i> Poster un nouveau message</a>
       </div>
     {% endif %}
   </div>
@@ -60,6 +70,28 @@
                 maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
             }
+        });
+
+        // Graphique Camembert (Utilisateurs)
+        const ctxUser = document.getElementById('usersChart').getContext('2d');
+        new Chart(ctxUser, {
+            type: 'pie',
+            data: {
+                labels: {{ user_labels|safe }},
+                datasets: [{
+                    data: {{ user_data|safe }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     });
 </script>

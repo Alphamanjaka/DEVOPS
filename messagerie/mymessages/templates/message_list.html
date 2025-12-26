@@ -114,10 +114,10 @@
     <h2>📬 Tableau de bord des Messages</h2>
     <div>
       {% if user.is_authenticated and perms.mymessages.add_message %}
-        <a href="{% url 'message_create' %}" class="btn-primary" style="margin-right: 10px;">+ Nouveau Message</a>
+        <a href="{% url 'message_create' %}" class="btn-primary" style="margin-right: 10px;"> <i class="fa-solid fa-pen" style="margin-right: 5px;"></i> Nouveau Message</a>
       {% endif %}
-      <a href="{% url 'message_import' %}" class="btn-primary" style="margin-right: 10px; background-color: #17a2b8;">📥 Importer CSV</a>
-      <a href="{% url 'export_messages_pdf' %}" class="btn-primary" style="background-color: #e67e22;">📄 Exporter PDF</a>
+      <a href="{% url 'message_import' %}" class="btn-primary" style="margin-right: 10px; background-color: #17a2b8;"><i class="fa-solid fa-upload" style="margin-right: 5px;"></i> Importer CSV</a>
+      <a href="{% url 'export_messages_pdf' %}" class="btn-primary" style="background-color: #e67e22;"> <i class="fa-solid fa-file-export" style="margin-right: 5px;"></i>Exporter PDF</a>
     </div>
   </div>
 
@@ -127,8 +127,8 @@
       <input type="text" name="q" placeholder="Rechercher un contenu ou un auteur..." value="{{ request.GET.q|default_if_none:'' }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1;">
       
       <select name="ordering" onchange="this.form.submit()" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <option value="-date_envoi" {% if request.GET.ordering == '-date_envoi' %}selected{% endif %}>📅 Plus récents</option>
-        <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}>📅 Plus anciens</option>
+        <option value="-date_envoi" {% if request.GET.ordering == '-date_envoi' %}selected{% endif %}> <i class="fa-solid fa-arrow-down" style="margin-right: 5px;"></i> Plus récents</option>
+        <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}> <i class="fa-solid fa-arrow-up" style="margin-right: 5px;"></i>Plus anciens</option>
       </select>
 
       <button type="submit" class="btn-primary" style="margin:0;">Filtrer</button>

@@ -34,12 +34,21 @@ def home(request):
               for stat in daily_stats if stat['date']]
     data = [stat['count'] for stat in daily_stats if stat['date']]
 
+    # Préparation des données pour le graphique (Messages par utilisateur)
+    user_stats = Message.objects.values('owner__username').annotate(
+        count=Count('id')).order_by('-count')
+    user_labels = [stat['owner__username'] if stat['owner__username']
+                   else 'Anonyme' for stat in user_stats]
+    user_data = [stat['count'] for stat in user_stats]
+
     return render(request, 'index.html', {
         'messages_liste': messages_liste,
         # Vérifie si l'utilisateur a la permission d'ajouter un message
         'can_post': request.user.has_perm('mymessages.add_message'),
         'chart_labels': json.dumps(labels),
         'chart_data': json.dumps(data),
+        'user_labels': json.dumps(user_labels),
+        'user_data': json.dumps(user_data),
     })
 
 
