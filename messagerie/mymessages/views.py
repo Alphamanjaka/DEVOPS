@@ -15,16 +15,31 @@ from django.views.generic import ListView, DetailView, DeleteView, UpdateView, C
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.db.models import Q  # Optional: for complex lookups
 from .services import MessageImportService
+from django.db.models.functions import TruncDay
+from django.db.models import Count
+import json
 
 
 @login_required
 def home(request):
     # On récupère tous les messages
     messages_liste = Message.objects.all().order_by('-date_envoi')
+
+    # Préparation des données pour le graphique (Messages par jour)
+    daily_stats = Message.objects.annotate(date=TruncDay('date_envoi')).values(
+        'date').annotate(count=Count('id')).order_by('date')
+
+    # Conversion des données pour Chart.js
+    labels = [stat['date'].strftime('%d/%m/%Y')
+              for stat in daily_stats if stat['date']]
+    data = [stat['count'] for stat in daily_stats if stat['date']]
+
     return render(request, 'index.html', {
         'messages_liste': messages_liste,
         # Vérifie si l'utilisateur a la permission d'ajouter un message
-        'can_post': request.user.has_perm('mymessages.add_message')
+        'can_post': request.user.has_perm('mymessages.add_message'),
+        'chart_labels': json.dumps(labels),
+        'chart_data': json.dumps(data),
     })
 
 
@@ -70,8 +85,9 @@ def bulk_delete_messages(request):
 
         if deleted_count > 0:
             messages.success(request, f"{deleted_count} messages supprimés.")
-    
+
     return redirect('message_list')
+
 
 @login_required
 def export_messages_pdf(request):

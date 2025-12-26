@@ -1,22 +1,66 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h1>Ma Messagerie CI/CD</h1>
+  <div style="max-width: 1000px; margin: 0 auto;">
+    <h2>Tableau de bord Global</h2>
 
-  {% if can_post %}
-    <form method="POST" action="{% url 'add_message' %}" style="margin-bottom: 20px;">
-      {% csrf_token %}
-      <input type="text" name="contenu" placeholder="Tapez votre message ici..." required style="width: 70%; padding: 10px;" />
-      <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer;">Envoyer</button>
-    </form>
-  {% endif %}
+    <!-- Section Graphique -->
+    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px;">
+      <h3 style="margin-top: 0;">Activité des messages (par jour)</h3>
+      <div style="position: relative; height: 300px; width: 100%;">
+        <canvas id="messagesChart"></canvas>
+      </div>
+    </div>
 
-  <hr />
-  <ul>
-    {% for msg in messages_liste %}
-      <li>
-        <strong>{{ msg.date_envoi|date:'H:i' }}</strong> : {{ msg.contenu }}
-      </li>
-    {% endfor %}
-  </ul>
+    <!-- Section Liste des messages récents -->
+    <h3>Derniers messages</h3>
+    <ul style="list-style: none; padding: 0;">
+      {% for message in messages_liste %}
+        <li style="background: white; border-bottom: 1px solid #eee; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>{{ message.owner.username|default:'Anonyme' }}</strong> : {{ message.contenu|truncatechars:80 }}
+          </div>
+          <small style="color: #666;">{{ message.date_envoi|date:'d/m/Y H:i' }}</small>
+        </li>
+      {% empty %}
+        <li>Aucun message pour le moment.</li>
+      {% endfor %}
+    </ul>
+
+    {% if can_post %}
+      <div style="margin-top: 20px;">
+        <a href="{% url 'message_create' %}" class="btn-primary">Poster un nouveau message</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Intégration de Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('messagesChart').getContext('2d');
+        const chartData = {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Nombre de messages',
+                data: {{ chart_data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.3, // Courbe lissée
+                fill: true
+            }]
+        };
+
+        new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    });
+</script>
 {% endblock %}
