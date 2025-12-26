@@ -1,12 +1,19 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect
+from django.http import FileResponse
+from django.contrib.auth.models import User
+from django.contrib import messages
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.http import require_POST
 from .models import Message
 from django.views.generic import ListView, DetailView, DeleteView, UpdateView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.db.models import Q  # Optional: for complex lookups
+from .services import MessageImportService
 
 
 @login_required
@@ -31,6 +38,46 @@ def add_message(request):
     return redirect('home')
 
 
+@login_required
+def export_messages_pdf(request):
+    # Crée un buffer en mémoire pour le PDF
+    buffer = io.BytesIO()
+    # Crée l'objet PDF via ReportLab
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # En-tête du PDF
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, height - 50, f"Messages de {request.user.username}")
+
+    # Contenu
+    p.setFont("Helvetica", 12)
+    y = height - 80
+
+    # Récupération des messages de l'utilisateur
+    messages = Message.objects.filter(
+        owner=request.user).order_by('-date_envoi')
+
+    for message in messages:
+        # Gestion du saut de page
+        if y < 50:
+            p.showPage()
+            y = height - 50
+            p.setFont("Helvetica", 12)
+
+        date_str = message.date_envoi.strftime("%d/%m/%Y %H:%M")
+        # On tronque le texte pour éviter qu'il ne sorte de la page (mise en page simple)
+        text = f"[{date_str}] {message.contenu}"
+        p.drawString(50, y, text[:90] + ('...' if len(text) > 90 else ''))
+        y -= 20
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename='mes_messages.pdf')
+
+
 class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Message
     fields = ['contenu']
@@ -38,6 +85,24 @@ class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     success_url = '/messages/'
     permission_required = 'mymessages.add_message'
     raise_exception = True
+
+    def post(self, request, *args, **kwargs):
+        # Si un fichier CSV est fourni, on traite l'import
+        if 'csv_file' in request.FILES:
+            csv_file = request.FILES['csv_file']
+            service = MessageImportService()
+            success_count, error_count = service.import_csv(csv_file)
+
+            if success_count > 0:
+                messages.success(
+                    request, f"{success_count} messages importés avec succès.")
+            if error_count > 0:
+                messages.warning(
+                    request, f"{error_count} lignes ignorées (erreurs ou en-tête).")
+            return redirect('home')
+
+        # Sinon, comportement standard de création d'un message unique
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.owner = self.request.user

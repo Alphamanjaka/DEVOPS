@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('add/', views.add_message, name='add_message'),
+    path('export-pdf/', views.export_messages_pdf, name='export_messages_pdf'),
     path('health/', health_check),
     path('accounts/', include('django.contrib.auth.urls')),
     path('messages/', include('mymessages.urls')),
