@@ -1,27 +1,207 @@
 {% extends 'base.html' %}
 
 {% block content %}
+  <style>
+    /* Styles spécifiques pour rendre la liste "Portfolio-ready" */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .toolbar {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      border: 1px solid #e9ecef;
+    }
 
-  <h2>Mes Messages</h2>
-  {% if user.is_authenticated and perms.message.add_message %}
-    <a href="{% url 'message_create' %}" class="btn-primary" style="display:inline-block; margin-bottom:1rem; text-decoration:none; width:auto;">Nouveau Message</a>
-  {% endif %}
-  <a href="{% url 'export_messages_pdf' %}" class="btn-primary" style="display:inline-block; margin-bottom:1rem; margin-left: 10px; text-decoration:none; width:auto; background-color: #e67e22;">Exporter PDF</a>
-  <hr />
-  <!-- The Search Form -->
-  <form method="get" action="">
-    <input type="text" name="q" placeholder="Search by title or content..." value="{{ request.GET.q|default_if_none:'' }}" />
-    <button type="submit">Search</button>
-  </form>
-  <!-- Messages List -->
-  <ul>
+    /* Style type "Email Client" */
+    .email-list {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 0.25rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .email-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid #f1f3f5;
+      text-decoration: none;
+      color: inherit;
+      transition: background-color 0.15s ease;
+    }
+
+    .email-item:last-child {
+      border-bottom: none;
+    }
+
+    .email-item:hover {
+      background-color: #f8f9fa;
+      position: relative;
+      z-index: 1;
+      box-shadow: inset 3px 0 0 #007bff; /* Indicateur bleu à gauche au survol */
+    }
+
+    .email-sender {
+      width: 200px;
+      font-weight: 600;
+      color: #212529;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sender-avatar {
+      width: 32px;
+      height: 32px;
+      background-color: #e9ecef;
+      color: #495057;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .email-content {
+      flex: 1;
+      margin: 0 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #6c757d;
+    }
+
+    .email-subject {
+      color: #212529;
+      font-weight: 500;
+      margin-right: 5px;
+    }
+
+    .email-date {
+      width: 120px;
+      text-align: right;
+      font-size: 0.85rem;
+      color: #868e96;
+      white-space: nowrap;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.875rem;
+      border-radius: 4px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-sm:hover { background-color: #0056b3; }
+  </style>
+
+
+  <div class="page-header">
+    <h2>📬 Tableau de bord des Messages</h2>
+    <div>
+      {% if user.is_authenticated and perms.mymessages.add_message %}
+        <a href="{% url 'message_create' %}" class="btn-primary" style="margin-right: 10px;">+ Nouveau Message</a>
+      {% endif %}
+      <a href="{% url 'message_import' %}" class="btn-primary" style="margin-right: 10px; background-color: #17a2b8;">📥 Importer CSV</a>
+      <a href="{% url 'export_messages_pdf' %}" class="btn-primary" style="background-color: #e67e22;">📄 Exporter PDF</a>
+    </div>
+  </div>
+
+  <!-- Toolbar: Recherche et Filtres -->
+  <div class="toolbar">
+    <form method="get" action="" style="display: flex; gap: 10px; width: 100%; align-items: center;">
+      <input type="text" name="q" placeholder="Rechercher un contenu ou un auteur..." value="{{ request.GET.q|default_if_none:'' }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1;">
+      
+      <select name="ordering" onchange="this.form.submit()" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="-date_envoi" {% if request.GET.ordering == '-date_envoi' %}selected{% endif %}>📅 Plus récents</option>
+        <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}>📅 Plus anciens</option>
+      </select>
+
+      <button type="submit" class="btn-primary" style="margin:0;">Filtrer</button>
+      {% if request.GET.q or request.GET.ordering %}
+        <a href="{% url 'message_list' %}" style="color: #666; text-decoration: underline; margin-left: 5px;">Réinitialiser</a>
+      {% endif %}
+      
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <input type="checkbox" id="select-all" style="cursor: pointer;">
+        <label for="select-all" style="cursor: pointer; margin: 0;">Tout</label>
+        <button type="submit" form="bulk-delete-form" class="btn-primary" style="background-color: #dc3545; border-color: #dc3545;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer les messages sélectionnés ?')">🗑️ Supprimer la sélection</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Liste de Messages (Style Email) -->
+  <form id="bulk-delete-form" method="post" action="{% url 'message_bulk_delete' %}">
+    {% csrf_token %}
+    <div class="email-list">
     {% for message in messages %}
-      <li>
-        <a href="{% url 'message_detail' message.pk %}">{{ message.contenu|truncatechars:50 }}</a>
-        <small>({{ message.date_envoi|date:'d/m/Y H:i' }})</small>
-      </li>
+      <div class="email-item">
+        <div style="margin-right: 15px;">
+          <input type="checkbox" name="message_ids" value="{{ message.pk }}">
+        </div>
+        <a href="{% url 'message_detail' message.pk %}" style="display: flex; flex: 1; align-items: center; text-decoration: none; color: inherit;">
+          <div class="email-sender">
+            <div class="sender-avatar">
+              {{ message.owner.username|first|upper|default:"?" }}
+            </div>
+            {{ message.owner.username|default:"Anonyme" }}
+          </div>
+          <div class="email-content">
+            <span class="email-subject">{{ message.contenu|truncatechars:30 }}</span>
+            - {{ message.contenu|truncatechars:80 }}
+          </div>
+          <div class="email-date">
+            {{ message.date_envoi|date:'d M Y, H:i' }}
+          </div>
+        </a>
+      </div>
     {% empty %}
-      <li>No message.</li>
+      <div style="padding: 40px; text-align: center; color: #6c757d;">
+        <p>Aucun message trouvé pour cette recherche.</p>
+      </div>
     {% endfor %}
-  </ul>
+    </div>
+  </form>
+
+  <!-- Pagination Stylisée -->
+  {% if is_paginated %}
+    <div class="pagination" style="margin-top: 30px; display: flex; justify-content: center; gap: 5px;">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">&laquo; Début</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">Précédent</a>
+      {% endif %}
+
+      <span style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+        Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">Suivant</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">Fin &raquo;</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <script>
+    document.getElementById('select-all').addEventListener('change', function() {
+      var checkboxes = document.querySelectorAll('input[name="message_ids"]');
+      for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = this.checked;
+      }
+    });
+  </script>
 {% endblock %}

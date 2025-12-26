@@ -8,16 +8,11 @@
       Create
     {% endif %}a message
   </h2>
-  <form method="post" enctype="multipart/form-data">
+  <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
 
-    <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; margin-bottom: 10px;">
-      <label for="csv_file" style="font-weight: bold;">Ou importer depuis un fichier CSV :</label><br />
-      <input type="file" name="csv_file" accept=".csv" />
-    </div>
-
-    <button type="submit" class="btn-primary">Enregistrer / Importer</button>
+    <button type="submit" class="btn-primary">Enregistrer</button>
   </form>
   <p style="margin-top:10px;">
     <a href="{% url 'message_list' %}">Cancel</a>

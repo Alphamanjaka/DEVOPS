@@ -117,3 +117,51 @@ class MessageListViewTest(TestCase):
         self.assertContains(response, "Msg U1")
         # Ne doit PAS contenir le message de U2
         self.assertNotContains(response, "Msg U2")
+
+
+class BulkDeleteTest(TestCase):
+    def setUp(self):
+        self.user1 = User.objects.create_user(username='user1', password='password')
+        self.user2 = User.objects.create_user(username='user2', password='password')
+        
+        self.msg1_u1 = Message.objects.create(contenu="Msg 1 User 1", owner=self.user1)
+        self.msg2_u1 = Message.objects.create(contenu="Msg 2 User 1", owner=self.user1)
+        self.msg1_u2 = Message.objects.create(contenu="Msg 1 User 2", owner=self.user2)
+
+    def test_bulk_delete_own_messages(self):
+        """User 1 supprime ses propres messages."""
+        self.client.login(username='user1', password='password')
+        
+        response = self.client.post(reverse('message_bulk_delete'), {
+            'message_ids': [self.msg1_u1.pk, self.msg2_u1.pk]
+        })
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Message.objects.filter(pk=self.msg1_u1.pk).exists())
+        self.assertFalse(Message.objects.filter(pk=self.msg2_u1.pk).exists())
+        # Le message de user 2 ne doit pas être touché
+        self.assertTrue(Message.objects.filter(pk=self.msg1_u2.pk).exists())
+
+    def test_bulk_delete_others_messages_ignored(self):
+        """User 1 essaie de supprimer le message de User 2."""
+        self.client.login(username='user1', password='password')
+        
+        response = self.client.post(reverse('message_bulk_delete'), {
+            'message_ids': [self.msg1_u2.pk]
+        })
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Message.objects.filter(pk=self.msg1_u2.pk).exists())
+
+    def test_bulk_delete_mixed_ownership(self):
+        """User 1 supprime un mélange de ses messages et ceux des autres."""
+        self.client.login(username='user1', password='password')
+        
+        response = self.client.post(reverse('message_bulk_delete'), {
+            'message_ids': [self.msg1_u1.pk, self.msg1_u2.pk]
+        })
+        
+        # Le sien est supprimé
+        self.assertFalse(Message.objects.filter(pk=self.msg1_u1.pk).exists())
+        # Celui de l'autre reste
+        self.assertTrue(Message.objects.filter(pk=self.msg1_u2.pk).exists())

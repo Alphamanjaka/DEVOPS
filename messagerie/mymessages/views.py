@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any
 from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect
@@ -37,6 +38,40 @@ def add_message(request):
         Message.objects.create(contenu=contenu, owner=request.user)
     return redirect('home')
 
+
+@login_required
+def import_messages(request):
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        service = MessageImportService()
+        success_count, error_count = service.import_csv(csv_file)
+
+        if success_count > 0:
+            messages.success(
+                request, f"{success_count} messages importés avec succès.")
+        if error_count > 0:
+            messages.warning(
+                request, f"{error_count} lignes ignorées (erreurs ou en-tête).")
+        return redirect('message_import')
+
+    return render(request, 'import_messages.html')
+
+
+@login_required
+@require_POST
+def bulk_delete_messages(request):
+    message_ids = request.POST.getlist('message_ids')
+    if message_ids:
+        # On filtre par ID et on s'assure que l'utilisateur est bien le propriétaire
+        deleted_count, _ = Message.objects.filter(
+            id__in=message_ids,
+            owner=request.user
+        ).delete()
+
+        if deleted_count > 0:
+            messages.success(request, f"{deleted_count} messages supprimés.")
+    
+    return redirect('message_list')
 
 @login_required
 def export_messages_pdf(request):
@@ -86,24 +121,6 @@ class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     permission_required = 'mymessages.add_message'
     raise_exception = True
 
-    def post(self, request, *args, **kwargs):
-        # Si un fichier CSV est fourni, on traite l'import
-        if 'csv_file' in request.FILES:
-            csv_file = request.FILES['csv_file']
-            service = MessageImportService()
-            success_count, error_count = service.import_csv(csv_file)
-
-            if success_count > 0:
-                messages.success(
-                    request, f"{success_count} messages importés avec succès.")
-            if error_count > 0:
-                messages.warning(
-                    request, f"{error_count} lignes ignorées (erreurs ou en-tête).")
-            return redirect('home')
-
-        # Sinon, comportement standard de création d'un message unique
-        return super().post(request, *args, **kwargs)
-
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
@@ -125,6 +142,10 @@ class MessageListView(LoginRequiredMixin, ListView):
                 | Q(owner__username__icontains=search_query)
             ).distinct()
         return queryset.filter(owner=self.request.user)
+
+    def get_ordering(self):
+        ordering = self.request.GET.get('ordering', '-date_envoi')
+        return ordering
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):
