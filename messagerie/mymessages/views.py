@@ -138,6 +138,59 @@ def export_messages_pdf(request):
     return FileResponse(buffer, as_attachment=True, filename='mes_messages.pdf')
 
 
+@login_required
+def export_stats_pdf(request):
+    # Crée un buffer en mémoire pour le PDF
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # En-tête
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(50, height - 50, "Rapport Statistique - Messagerie DevOps")
+    p.setFont("Helvetica", 12)
+    p.drawString(50, height - 70, f"Généré par : {request.user.username}")
+
+    # Récupération des données (identique à la vue home)
+    daily_stats = Message.objects.annotate(date=TruncDay('date_envoi')).values(
+        'date').annotate(count=Count('id')).order_by('date')
+    user_stats = Message.objects.values('owner__username').annotate(
+        count=Count('id')).order_by('-count')
+
+    y = height - 110
+
+    # Section 1: Activité par jour
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(50, y, "1. Activité journalière (Nombre de messages)")
+    y -= 25
+    p.setFont("Helvetica", 12)
+
+    for stat in daily_stats:
+        if stat['date']:
+            date_str = stat['date'].strftime('%d/%m/%Y')
+            p.drawString(70, y, f"- {date_str} : {stat['count']} message(s)")
+            y -= 20
+            if y < 50:
+                p.showPage()
+                y = height - 50
+
+    y -= 20
+    # Section 2: Répartition par utilisateur
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(50, y, "2. Répartition par utilisateur")
+    y -= 25
+    p.setFont("Helvetica", 12)
+
+    for stat in user_stats:
+        username = stat['owner__username'] if stat['owner__username'] else 'Anonyme'
+        p.drawString(70, y, f"- {username} : {stat['count']} message(s)")
+        y -= 20
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename='statistiques_dashboard.pdf')
+
 class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Message
     fields = ['contenu']

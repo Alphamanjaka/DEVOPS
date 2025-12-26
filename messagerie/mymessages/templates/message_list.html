@@ -1,123 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <style>
-    /* Styles spécifiques pour rendre la liste "Portfolio-ready" */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    
-    .toolbar {
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      border: 1px solid #e9ecef;
-    }
 
-    /* Style type "Email Client" */
-    .email-list {
-      background: white;
-      border: 1px solid #dee2e6;
-      border-radius: 0.25rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    .email-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 15px;
-      border-bottom: 1px solid #f1f3f5;
-      text-decoration: none;
-      color: inherit;
-      transition: background-color 0.15s ease;
-    }
-
-    .email-item:last-child {
-      border-bottom: none;
-    }
-
-    .email-item:hover {
-      background-color: #f8f9fa;
-      position: relative;
-      z-index: 1;
-      box-shadow: inset 3px 0 0 #007bff; /* Indicateur bleu à gauche au survol */
-    }
-
-    .email-sender {
-      width: 200px;
-      font-weight: 600;
-      color: #212529;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .sender-avatar {
-      width: 32px;
-      height: 32px;
-      background-color: #e9ecef;
-      color: #495057;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    .email-content {
-      flex: 1;
-      margin: 0 20px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: #6c757d;
-    }
-
-    .email-subject {
-      color: #212529;
-      font-weight: 500;
-      margin-right: 5px;
-    }
-
-    .email-date {
-      width: 120px;
-      text-align: right;
-      font-size: 0.85rem;
-      color: #868e96;
-      white-space: nowrap;
-    }
-
-    .btn-sm {
-      padding: 5px 10px;
-      font-size: 0.875rem;
-      border-radius: 4px;
-      text-decoration: none;
-      background-color: #007bff;
-      color: white;
-    }
-    .btn-sm:hover { background-color: #0056b3; }
-  </style>
 
 
   <div class="page-header">
     <h2>📬 Tableau de bord des Messages</h2>
-    <div>
+    <div >
       {% if user.is_authenticated and perms.mymessages.add_message %}
-        <a href="{% url 'message_create' %}" class="btn-primary" style="margin-right: 10px;"> <i class="fa-solid fa-pen" style="margin-right: 5px;"></i> Nouveau Message</a>
+        <a href="{% url 'message_create' %}" class="btn btn-primary" style="margin-right: 10px;" title="Nouveau Message">
+          <i class="fa-solid fa-pen"></i>
+          <span>Nouveau Message</span>
+        </a>
       {% endif %}
-      <a href="{% url 'message_import' %}" class="btn-primary" style="margin-right: 10px; background-color: #17a2b8;"><i class="fa-solid fa-upload" style="margin-right: 5px;"></i> Importer CSV</a>
-      <a href="{% url 'export_messages_pdf' %}" class="btn-primary" style="background-color: #e67e22;"> <i class="fa-solid fa-file-export" style="margin-right: 5px;"></i>Exporter PDF</a>
+      <a href="{% url 'message_import' %}" class="btn btn-primary" style="margin-right: 10px; background-color: #17a2b8;" title="Importer CSV">
+        <i class="fa-solid fa-upload"></i>
+        <span>Importer CSV</span>
+      </a>
+      <a href="{% url 'export_messages_pdf' %}" class="btn btn-primary" style="background-color: #e67e22;" title="Exporter PDF">
+        <i class="fa-solid fa-file-export"></i>
+        <span>Exporter PDF</span>
+      </a>
     </div>
   </div>
 
@@ -131,7 +34,7 @@
         <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}> <i class="fa-solid fa-arrow-up" style="margin-right: 5px;"></i>Plus anciens</option>
       </select>
 
-      <button type="submit" class="btn-primary" style="margin:0;">Filtrer</button>
+      <button type="submit" class="btn btn-primary" style="margin:0;">Filtrer</button>
       {% if request.GET.q or request.GET.ordering %}
         <a href="{% url 'message_list' %}" style="color: #666; text-decoration: underline; margin-left: 5px;">Réinitialiser</a>
       {% endif %}
@@ -139,7 +42,7 @@
       <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
         <input type="checkbox" id="select-all" style="cursor: pointer;">
         <label for="select-all" style="cursor: pointer; margin: 0;">Tout</label>
-        <button type="submit" form="bulk-delete-form" class="btn-primary" style="background-color: #dc3545; border-color: #dc3545;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer les messages sélectionnés ?')">🗑️ Supprimer la sélection</button>
+        <button type="submit" form="bulk-delete-form" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer les messages sélectionnés ?')">🗑️ Supprimer la sélection</button>
       </div>
     </form>
   </div>

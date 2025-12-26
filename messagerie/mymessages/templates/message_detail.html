@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>detail du message</h2>
+  <h2><i class="fa-solid fa-envelope-open-text"></i> Détail du message</h2>
   <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
     <p>
-      <strong>content :</strong> {{ message.contenu }}
+      <strong><i class="fa-solid fa-align-left"></i> Contenu :</strong> {{ message.contenu }}
     </p>
     <p>
-      <strong>Date :</strong> {{ message.date_envoi }}
+      <strong><i class="fa-regular fa-clock"></i> Date :</strong> {{ message.date_envoi }}
     </p>
   </div>
 
   <div>
     {% if user == message.owner or user.is_superuser %}
-      <a href="{% url 'message_update' message.pk %}">Edit</a> |
-      <a href="{% url 'message_delete' message.pk %}" style="color: red;">Delete</a> |
+      <a href="{% url 'message_update' message.pk %}"><i class="fa-solid fa-pen-to-square"></i> Éditer</a> |
+      <a href="{% url 'message_delete' message.pk %}" style="color: red;"><i class="fa-solid fa-trash"></i> Supprimer</a> |
     {% endif %}
-    <a href="{% url 'message_list' %}">Back to list</a>
+    <a href="{% url 'message_list' %}"><i class="fa-solid fa-arrow-left"></i> Retour à la liste</a>
   </div>
 {% endblock %}
