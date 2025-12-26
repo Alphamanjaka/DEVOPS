@@ -95,18 +95,3 @@
       white-space: nowrap;
   }
 
-  .btn-sm {
-      padding: 5px 10px;
-      font-size: 0.875rem;
-      border-radius: 4px;
-      text-decoration: none;
-      background-color: #007bff;
-      color: white;
-  }
-
-  .btn-sm:hover {
-      background-color: #0056b3;
-  }
-  .btn{
-    width: fit-content;
-  }

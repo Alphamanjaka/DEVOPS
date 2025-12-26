@@ -12,37 +12,9 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
     <link rel="stylesheet" href="{% static 'css/message_list.css' %}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    <style>
-      /* Amélioration globale des boutons */
-      .btn-primary,
-      .btn-logout,
-      button,
-      .btn-sm,
-      input[type='submit'],
-      input[type='file'] {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        line-height: 1.2;
-        gap: 8px;
-      }
-      
-      .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        filter: brightness(105%);
-      }
-    </style>
+    <style></style>
   </head>
-  <body>
+  <body class="{% if theme == 'dark' %}dark-theme{% else %}light-theme{% endif %}">
     <header>
       <button class="menu-toggle" onclick="document.querySelector('aside').classList.toggle('active')">☰</button>
       <div class="logo">
@@ -58,9 +30,6 @@
         {% else %}
           <a href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket"></i> Connexion</a>
         {% endif %}
-        <button id="theme-toggle" class="btn-logout" style="margin-left: 10px;" title="Mode Sombre/Clair">
-          <i class="fa-solid fa-moon"></i>
-        </button>
       </div>
     </header>
     <div class="layout-container">
@@ -93,30 +62,5 @@
     <footer>
       <p>&copy; 2025 Messagerie DevOps - Tous droits réservés.</p>
     </footer>
-    <script>
-      const toggleBtn = document.getElementById('theme-toggle');
-      const body = document.body;
-      const icon = toggleBtn.querySelector('i');
-
-      if (localStorage.getItem('theme') === 'dark') {
-        body.setAttribute('data-theme', 'dark');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-      }
-
-      toggleBtn.addEventListener('click', () => {
-        if (body.getAttribute('data-theme') === 'dark') {
-          body.removeAttribute('data-theme');
-          localStorage.setItem('theme', 'light');
-          icon.classList.remove('fa-sun');
-          icon.classList.add('fa-moon');
-        } else {
-          body.setAttribute('data-theme', 'dark');
-          localStorage.setItem('theme', 'dark');
-          icon.classList.remove('fa-moon');
-          icon.classList.add('fa-sun');
-        }
-      });
-    </script>
   </body>
 </html>
