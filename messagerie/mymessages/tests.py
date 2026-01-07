@@ -19,7 +19,7 @@ class AccessControlTest(TestCase):
 
         # Cas 2: Superuser -> Accès au dashboard (home)
         admin = User.objects.create_superuser(
-            'admin', 'password', 'email@test.com')
+            username='admin', password='password', email='email@test.com')
         self.client.login(username='admin', password='password')
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
@@ -49,7 +49,7 @@ class MessagePermissionTest(TestCase):
 
         # Cas 2: Superuser -> Accès et can_post=True
         admin = User.objects.create_superuser(
-            'admin_perm', 'password', 'email@test.com')
+            username='admin_perm', password='password', email='email@test.com')
         self.client.login(username='admin_perm', password='password')
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
