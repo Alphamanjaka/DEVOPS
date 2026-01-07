@@ -60,10 +60,10 @@
           {% endif %}
 
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'message_list' %}?folder=inbox"><i class="fa-solid fa-inbox"></i> Inbox</a>
+            <a href="{% url 'message_list' %}?folder=inbox"><i class="fa-solid fa-inbox"></i> Inbox</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'message_list' %}?folder=sent"><i class="fa-solid fa-paper-plane"></i> Sent</a>
+            <a href="{% url 'message_list' %}?folder=sent"><i class="fa-solid fa-paper-plane"></i> Sent</a>
           </li>
 
           {% if user.is_authenticated %}
