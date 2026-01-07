@@ -15,8 +15,13 @@ class MessageImportService:
             if row:
                 try:
                     user = User.objects.get(username=row[2])
+                    recipient = None
+                    if len(row) > 3 and row[3]:
+                        recipient = User.objects.filter(
+                            username=row[3]).first()
+
                     Message.objects.create(
-                        contenu=row[0], date_envoi=row[1], owner=user)
+                        contenu=row[0], date_envoi=row[1], owner=user, recipient=recipient)
                     success_count += 1
                 except (User.DoesNotExist, IndexError, Exception):
                     error_count += 1

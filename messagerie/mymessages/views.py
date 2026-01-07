@@ -22,6 +22,8 @@ import json
 
 @login_required
 def home(request):
+    if request.user.is_superuser == False:
+        return redirect('message_list')
     # On récupère tous les messages
     messages_liste = Message.objects.all().order_by('-date_envoi')
 
@@ -57,9 +59,15 @@ def home(request):
 @require_POST
 def add_message(request):
     contenu = request.POST.get("contenu")
+    recipient_id = request.POST.get("recipient")
+    recipient = None
+    if recipient_id:
+        recipient = User.objects.filter(pk=recipient_id).first()
+
     if contenu:
         print("Nouveau message :", contenu)
-        Message.objects.create(contenu=contenu, owner=request.user)
+        Message.objects.create(
+            contenu=contenu, owner=request.user, recipient=recipient)
     return redirect('home')
 
 
@@ -191,9 +199,10 @@ def export_stats_pdf(request):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename='statistiques_dashboard.pdf')
 
+
 class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Message
-    fields = ['contenu']
+    fields = ['contenu', 'recipient']
     template_name = 'message_form.html'
     success_url = '/messages/'
     permission_required = 'mymessages.add_message'
@@ -219,7 +228,9 @@ class MessageListView(LoginRequiredMixin, ListView):
                 Q(contenu__icontains=search_query)
                 | Q(owner__username__icontains=search_query)
             ).distinct()
-        return queryset.filter(owner=self.request.user)
+        return queryset.filter(
+            Q(owner=self.request.user) | Q(recipient=self.request.user)
+        )
 
     def get_ordering(self):
         ordering = self.request.GET.get('ordering', '-date_envoi')
@@ -247,7 +258,7 @@ class MessageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesT
 
 class MessageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Message
-    fields = ['contenu']
+    fields = ['contenu', 'recipient']
     template_name = 'message_form.html'
     success_url = '/messages/'
     permission_required = 'mymessages.change_message'

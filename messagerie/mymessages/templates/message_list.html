@@ -59,9 +59,17 @@
         <a href="{% url 'message_detail' message.pk %}" style="display: flex; flex: 1; align-items: center; text-decoration: none; color: inherit;">
           <div class="email-sender">
             <div class="sender-avatar">
-              {{ message.owner.username|first|upper|default:"?" }}
+              {% if message.sender == request.user %}
+                {{ message.recipient.username|first|upper|default:"?" }}
+              {% else %}
+                {{ message.sender.username|first|upper|default:"?" }}
+              {% endif %}
             </div>
-            {{ message.owner.username|default:"Anonyme" }}
+            {% if message.sender == request.user %}
+              À : {{ message.recipient.username|default:"Anonyme" }}
+            {% else %}
+              {{ message.sender.username|default:"Anonyme" }}
+            {% endif %}
           </div>
           <div class="email-content">
             <span class="email-subject">{{ message.contenu|truncatechars:30 }}</span>

@@ -16,6 +16,43 @@ Ce projet est une démonstration technique d'une chaîne **DevOps complète** ap
 
 Le workflow est défini dans `.github/workflows/ci.yml` et se divise en deux étapes majeures :
 
+```mermaid
+flowchart LR
+    %% Déclencheur
+    Trigger([Push sur branche 'main']) --> CI
+
+    %% Job 1 : Intégration Continue
+    subgraph CI [Job: Intégration Continue]
+        direction TB
+        Step1[Checkout Code] --> Step2[Création .env Test]
+        Step2 --> Step3[Tests Unitaires<br/>(Docker Compose)]
+    end
+
+    %% Condition de transition
+    CI -- Si Succès --> CD
+    CI -- Si Échec --> Fail([Arrêt du Pipeline])
+
+    %% Job 2 : Livraison Continue
+    subgraph CD [Job: Livraison Continue]
+        direction TB
+        Step4[Checkout Code] --> Step5[Login GHCR]
+        Step5 --> Step6[Build Image Prod]
+        Step6 --> Step7[Push Image vers Registry]
+    end
+
+    %% Résultat final
+    CD --> Success([Image prête à déployer<br/>sur GHCR])
+
+    %% Styles pour la lisibilité
+    classDef success fill:#e6fffa,stroke:#2c7a7b,stroke-width:2px;
+    classDef failure fill:#fff5f5,stroke:#c53030,stroke-width:2px;
+    classDef process fill:#ebf8ff,stroke:#2b6cb0,stroke-width:2px;
+
+    class Trigger,Success success
+    class Fail failure
+    class Step1,Step2,Step3,Step4,Step5,Step6,Step7 process
+```
+
 ### 1. Intégration Continue (CI)
 
 À chaque `push` sur la branche `main` :

@@ -118,6 +118,17 @@ class MessageListViewTest(TestCase):
         # Ne doit PAS contenir le message de U2
         self.assertNotContains(response, "Msg U2")
 
+    def test_recipient_visibility(self):
+        """Un utilisateur doit voir les messages qui lui sont destinés"""
+        # Message envoyé par U2 à U1
+        Message.objects.create(contenu="Hello U1 from U2", owner=self.user2, recipient=self.user1)
+
+        self.client.login(username='u1', password='password')
+        response = self.client.get(reverse('message_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hello U1 from U2")
+
 
 class BulkDeleteTest(TestCase):
     def setUp(self):

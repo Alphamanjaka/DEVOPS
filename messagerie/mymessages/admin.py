@@ -6,7 +6,7 @@ from .models import Message
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('contenu', 'date_envoi', 'owner')
+    list_display = ('contenu', 'date_envoi', 'owner', 'recipient')
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Si l'objet existe (modification), on rend 'owner' non modifiable

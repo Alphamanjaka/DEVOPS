@@ -7,7 +7,7 @@ class Message(models.Model):
     contenu = models.TextField()
     date_envoi = models.DateTimeField(default=timezone.now)
     owner = models.ForeignKey('auth.User', on_delete=models.CASCADE, null=True, blank=True)
-
+    recipient = models.ForeignKey('auth.User', related_name='received_messages', on_delete=models.CASCADE, null=True, blank=True)
     def __str__(self):
         return self.contenu[:20]
     
