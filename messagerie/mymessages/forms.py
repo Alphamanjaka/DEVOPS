@@ -13,10 +13,11 @@ class MessageForm(forms.ModelForm):
 
     class Meta:
         model = Message
-        fields = ['contenu', 'recipient', 'recipients', 'parent']
+        fields = ['subject', 'contenu', 'recipient', 'recipients', 'parent']
         widgets = {
             'parent': forms.HiddenInput(),
             'recipient': forms.HiddenInput(),
+            'subject': forms.TextInput(attrs={'placeholder': 'Sujet du message (optionnel)'}),
             'contenu': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Écrivez votre message...'}),
         }
 

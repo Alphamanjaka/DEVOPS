@@ -14,6 +14,9 @@
   <div class="message-detail-card">
     <div class="message-detail-header">
       <div class="message-detail-meta">
+        {% if message.subject %}
+          <h3><i class="fa-solid fa-tag"></i> {{ message.subject }}</h3>
+        {% endif %}
         <span><i class="fa-solid fa-user"></i> <strong>De :</strong> {{ message.owner.username|default:"Anonyme" }}</span>
         <span><i class="fa-solid fa-users"></i> <strong>À :</strong> {{ message.recipient_display }}</span>
         <span><i class="fa-regular fa-clock"></i> {{ message.date_envoi|date:'d/m/Y H:i' }}</span>

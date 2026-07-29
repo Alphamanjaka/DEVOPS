@@ -71,8 +71,10 @@
             {% endif %}
           </div>
           <div class="email-content">
-            <span class="email-subject">{{ message.contenu|truncatechars:30 }}</span>
-            - {{ message.contenu|truncatechars:80 }}
+            <span class="email-subject">{{ message.subject|default:message.contenu|truncatechars:30 }}</span>
+            {% if message.subject %}
+              <span class="email-preview">{{ message.contenu|truncatechars:60 }}</span>
+            {% endif %}
           </div>
           <div class="email-date">
             {{ message.date_envoi|date:'d M Y, H:i' }}

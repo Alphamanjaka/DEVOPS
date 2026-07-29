@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from typing import Any
 from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.http import FileResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -19,7 +20,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from .forms import MessageForm
 from .models import Message
-from .services import MessageImportService
+from .services import MessageImportService, get_message_stats
 
 
 def register(request):
@@ -39,15 +40,7 @@ def home(request):
     if request.user.is_superuser == False:
         return redirect('message_list')
     messages_liste = Message.objects.all().order_by('-date_envoi')
-    daily_stats = Message.objects.annotate(date=TruncDay('date_envoi')).values(
-        'date').annotate(count=Count('id')).order_by('date')
-    labels = [stat['date'].strftime('%d/%m/%Y') for stat in daily_stats if stat['date']]
-    data = [stat['count'] for stat in daily_stats if stat['date']]
-    user_stats = Message.objects.values('owner__username').annotate(
-        count=Count('id')).order_by('-count')
-    user_labels = [stat['owner__username'] if stat['owner__username']
-                   else 'Anonyme' for stat in user_stats]
-    user_data = [stat['count'] for stat in user_stats]
+    stats = get_message_stats()
     paginator = Paginator(messages_liste, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -60,10 +53,10 @@ def home(request):
         'messages_liste': page_obj,
         'page_obj': page_obj,
         'can_post': request.user.has_perm('mymessages.add_message'),
-        'chart_labels': json.dumps(labels),
-        'chart_data': json.dumps(data),
-        'user_labels': json.dumps(user_labels),
-        'user_data': json.dumps(user_data),
+        'chart_labels': json.dumps(stats['labels']),
+        'chart_data': json.dumps(stats['data']),
+        'user_labels': json.dumps(stats['user_labels']),
+        'user_data': json.dumps(stats['user_data']),
     })
 
 
@@ -141,31 +134,25 @@ def export_stats_pdf(request):
     p.drawString(50, height - 50, "Rapport Statistique - Messagerie DevOps")
     p.setFont("Helvetica", 12)
     p.drawString(50, height - 70, f"Généré par : {request.user.username}")
-    daily_stats = Message.objects.annotate(date=TruncDay('date_envoi')).values(
-        'date').annotate(count=Count('id')).order_by('date')
-    user_stats = Message.objects.values('owner__username').annotate(
-        count=Count('id')).order_by('-count')
+    stats = get_message_stats()
     y = height - 110
     p.setFont("Helvetica-Bold", 14)
     p.drawString(50, y, "1. Activité journalière (Nombre de messages)")
     y -= 25
     p.setFont("Helvetica", 12)
-    for stat in daily_stats:
-        if stat['date']:
-            date_str = stat['date'].strftime('%d/%m/%Y')
-            p.drawString(70, y, f"- {date_str} : {stat['count']} message(s)")
-            y -= 20
-            if y < 50:
-                p.showPage()
-                y = height - 50
+    for label, count in zip(stats['labels'], stats['data']):
+        p.drawString(70, y, f"- {label} : {count} message(s)")
+        y -= 20
+        if y < 50:
+            p.showPage()
+            y = height - 50
     y -= 20
     p.setFont("Helvetica-Bold", 14)
     p.drawString(50, y, "2. Répartition par utilisateur")
     y -= 25
     p.setFont("Helvetica", 12)
-    for stat in user_stats:
-        username = stat['owner__username'] if stat['owner__username'] else 'Anonyme'
-        p.drawString(70, y, f"- {username} : {stat['count']} message(s)")
+    for username, count in zip(stats['user_labels'], stats['user_data']):
+        p.drawString(70, y, f"- {username} : {count} message(s)")
         y -= 20
     p.showPage()
     p.save()
@@ -177,7 +164,7 @@ class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     model = Message
     form_class = MessageForm
     template_name = 'message_form.html'
-    success_url = '/messages/'
+    success_url = reverse_lazy('message_list')
     permission_required = 'mymessages.add_message'
     raise_exception = True
 
@@ -223,7 +210,9 @@ class MessageListView(LoginRequiredMixin, ListView):
         ).distinct()
 
     def get_ordering(self):
-        return self.request.GET.get('ordering', '-date_envoi')
+        ordering = self.request.GET.get('ordering', '-date_envoi')
+        allowed = ['date_envoi', '-date_envoi', 'owner__username', '-owner__username']
+        return ordering if ordering in allowed else '-date_envoi'
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):
@@ -249,7 +238,7 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
 class MessageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Message
     template_name = 'message_confirm_delete.html'
-    success_url = '/messages/'
+    success_url = reverse_lazy('message_list')
     permission_required = 'mymessages.delete_message'
     raise_exception = True
 
@@ -262,7 +251,7 @@ class MessageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesT
     model = Message
     form_class = MessageForm
     template_name = 'message_form.html'
-    success_url = '/messages/'
+    success_url = reverse_lazy('message_list')
     permission_required = 'mymessages.change_message'
     raise_exception = True
 

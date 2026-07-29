@@ -37,7 +37,7 @@
         <div class="pipeline-body">
           <div class="pipeline-top">
             <strong>{{ p.name }}</strong>
-            <span class="pipeline-commit">{{ p.commit }}</span>
+            <span class="pipeline-commit">{{ p.commit|default:'—' }}</span>
           </div>
           <div class="pipeline-meta">
             <span>{{ p.branch }}</span>
@@ -46,8 +46,7 @@
             <span>{{ p.time|timesince }}</span>
           </div>
         </div>
-        <form method="post" action="{% url 'devops_notify_pipeline' %}" style="display:inline">
-          {% csrf_token %}
+        <form method="get" action="{% url 'devops_notify_pipeline' %}" style="display:inline">
           <input type="hidden" name="pipeline" value="{{ p.name }}">
           <input type="hidden" name="status" value="{{ p.status }}">
           <button class="btn-notify" title="Notifier l'équipe"><i class="fa-solid fa-bell"></i></button>
@@ -74,7 +73,7 @@
       {% for d in deployments %}
       <tr>
         <td><code>{{ d.version }}</code></td>
-        <td><span class="env-tag env-{{ d.env }}">{{ d.env }}</span></td>
+        <td><span class="env-tag env-{{ d.env }}">{{ d.environment }}</span></td>
         <td><span class="status-tag status-{{ d.status }}">{{ d.status }}</span></td>
         <td>{{ d.by }}</td>
         <td class="muted">{{ d.time|timesince }}</td>

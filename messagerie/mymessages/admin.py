@@ -6,7 +6,7 @@ from .models import Message
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('contenu', 'date_envoi', 'owner', 'recipient', 'is_read', 'parent')
+    list_display = ('subject', 'contenu', 'date_envoi', 'owner', 'recipient', 'is_read', 'parent')
     list_filter = ('is_read', 'date_envoi')
 
     def get_readonly_fields(self, request, obj=None):

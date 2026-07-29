@@ -32,6 +32,13 @@
         {% endif %}
       </div>
       <div class="form-group">
+        <label for="{{ form.subject.id_for_label }}">Sujet</label>
+        {{ form.subject }}
+        {% if form.subject.errors %}
+          <div class="form-errors">{{ form.subject.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="form-group">
         <label for="{{ form.contenu.id_for_label }}">Message</label>
         {{ form.contenu }}
         {% if form.contenu.errors %}

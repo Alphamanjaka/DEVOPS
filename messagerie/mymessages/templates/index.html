@@ -60,14 +60,18 @@
 
   <!-- Intégration de Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ chart_labels|json_script:"chart-labels" }}
+{{ chart_data|json_script:"chart-data" }}
+{{ user_labels|json_script:"user-labels" }}
+{{ user_data|json_script:"user-data" }}
   <script>
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('messagesChart').getContext('2d');
         const chartData = {
-            labels: {{ chart_labels|safe }},
+            labels: JSON.parse(document.getElementById('chart-labels').textContent),
             datasets: [{
                 label: 'Nombre de messages',
-                data: {{ chart_data|safe }},
+                data: JSON.parse(document.getElementById('chart-data').textContent),
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 2,
@@ -91,9 +95,9 @@
         new Chart(ctxUser, {
             type: 'pie',
             data: {
-                labels: {{ user_labels|safe }},
+                labels: JSON.parse(document.getElementById('user-labels').textContent),
                 datasets: [{
-                    data: {{ user_data|safe }},
+                    data: JSON.parse(document.getElementById('user-data').textContent),
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.7)',
                         'rgba(54, 162, 235, 0.7)',
