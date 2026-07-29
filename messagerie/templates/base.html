@@ -12,58 +12,105 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
     <link rel="stylesheet" href="{% static 'css/message_list.css' %}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    <style></style>
   </head>
   <body>
     <header>
-      <button class="menu-toggle" onclick="document.querySelector('aside').classList.toggle('active')">☰</button>
+      <button class="menu-toggle" onclick="document.querySelector('aside').classList.toggle('active')" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
       <div class="logo">
         <a href="{% url 'home' %}">Messagerie DevOps</a>
       </div>
       <div class="user-menu">
-        <button id="theme-toggle" class="btn-logout" style="margin-right: 10px;" aria-label="Basculer le thème">
+        <button id="theme-toggle" class="btn-icon" aria-label="Basculer le thème">
           <i class="fa-solid fa-moon"></i>
         </button>
         {% if user.is_authenticated %}
-          <span>{{ user.username }}</span>
-          <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 10px;">
+          <span class="user-name">{{ user.username }}</span>
+          <form action="{% url 'logout' %}" method="post" class="inline-form">
             {% csrf_token %}
             <button type="submit" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
           </form>
         {% else %}
-          <a href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket"></i> Connexion</a>
+          <a href="{% url 'login' %}" class="btn-logout"><i class="fa-solid fa-right-to-bracket"></i> Connexion</a>
         {% endif %}
       </div>
     </header>
     <div class="layout-container">
       <aside>
-        <h3>Menu</h3>
-        <nav>
-          {% if user.is_superuser %}
-            <a href="{% url 'home' %}">
-              <!-- Home Icon -->
-              <i class="fa-solid fa-house"></i> home
-            </a>
-          {% endif %}
-
-          <li class="nav-item">
-            <a href="{% url 'message_list' %}?folder=inbox"><i class="fa-solid fa-inbox"></i> Inbox
-              {% if unread_count %}
-                <span class="badge">{{ unread_count }}</span>
+        <div class="sidebar-section">
+          <h3><i class="fa-solid fa-envelope"></i> Messagerie</h3>
+          <nav>
+            <ul>
+              <li>
+                <a href="{% url 'message_list' %}?folder=inbox"><i class="fa-solid fa-inbox"></i> Boîte de réception
+                  {% if unread_count %}
+                    <span class="badge">{{ unread_count }}</span>
+                  {% endif %}
+                </a>
+              </li>
+              <li>
+                <a href="{% url 'message_list' %}?folder=sent"><i class="fa-solid fa-paper-plane"></i> Messages envoyés</a>
+              </li>
+              {% if perms.mymessages.add_message %}
+              <li>
+                <a href="{% url 'message_create' %}"><i class="fa-solid fa-pen-to-square"></i> Nouveau message</a>
+              </li>
               {% endif %}
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'message_list' %}?folder=sent"><i class="fa-solid fa-paper-plane"></i> Sent</a>
-          </li>
+            </ul>
+          </nav>
+        </div>
 
-          {% if user.is_authenticated %}
-            <a href="{% url 'password_change' %}">
-              <!-- Lock Icon -->
-              <i class="fa-solid fa-lock"></i> Privacy
-            </a>
-          {% endif %}
-        </nav>
+        <div class="sidebar-section">
+          <h3><i class="fa-solid fa-tools"></i> Actions</h3>
+          <nav>
+            <ul>
+              <li>
+                <a href="{% url 'message_import' %}"><i class="fa-solid fa-upload"></i> Importer CSV</a>
+              </li>
+              <li>
+                <a href="{% url 'export_messages_pdf' %}"><i class="fa-solid fa-file-export"></i> Exporter PDF</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        <div class="sidebar-section">
+          <h3><i class="fa-solid fa-cog"></i> Administration</h3>
+          <nav>
+            <ul>
+              {% if user.is_superuser %}
+              <li>
+                <a href="{% url 'home' %}"><i class="fa-solid fa-chart-simple"></i> Dashboard</a>
+              </li>
+              <li>
+                <a href="{% url 'export_stats_pdf' %}"><i class="fa-solid fa-file-pdf"></i> Rapport statistiques</a>
+              </li>
+              {% endif %}
+              <li>
+                <a href="{% url 'swagger-ui' %}"><i class="fa-solid fa-book"></i> API (Swagger)</a>
+              </li>
+              {% if user.is_superuser %}
+              <li>
+                <a href="{% url 'admin:index' %}"><i class="fa-solid fa-shield-alt"></i> Admin Django</a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+
+        <div class="sidebar-section">
+          <h3><i class="fa-solid fa-user"></i> Compte</h3>
+          <nav>
+            <ul>
+              {% if user.is_authenticated %}
+              <li>
+                <a href="{% url 'password_change' %}"><i class="fa-solid fa-lock"></i> Changer mot de passe</a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
       </aside>
       <main>
         {% block content %}

@@ -12,20 +12,36 @@
   </h2>
 
   {% if parent_message %}
-    <div style="background: #f0f8ff; padding: 12px; border-radius: 5px; margin-bottom: 15px; border-left: 3px solid #3498db;">
-      <small>
-        <strong>En réponse à {{ parent_message.owner.username }} :</strong>
-        {{ parent_message.contenu|truncatechars:100 }}
-      </small>
+    <div class="reply-banner">
+      <strong>En réponse à {{ parent_message.owner.username }} :</strong>
+      {{ parent_message.contenu|truncatechars:100 }}
     </div>
   {% endif %}
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Enregistrer</button>
-  </form>
-  <p style="margin-top:10px;">
-    <a href="{% url 'message_list' %}"><i class="fa-solid fa-xmark"></i> Annuler</a>
-  </p>
+  <div class="card form-card">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.parent }}
+      <div class="form-group">
+        <label>Destinataires</label>
+        <div class="recipients-checkboxes">
+          {{ form.recipients }}
+        </div>
+        {% if form.recipients.errors %}
+          <div class="form-errors">{{ form.recipients.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.contenu.id_for_label }}">Message</label>
+        {{ form.contenu }}
+        {% if form.contenu.errors %}
+          <div class="form-errors">{{ form.contenu.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Envoyer</button>
+        <a href="{% url 'message_list' %}" class="btn" style="background:var(--bg-sidebar);color:var(--text-sidebar);border:1px solid var(--border-color);">Annuler</a>
+      </div>
+    </form>
+  </div>
 {% endblock %}

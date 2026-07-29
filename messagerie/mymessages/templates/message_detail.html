@@ -4,47 +4,47 @@
   <h2><i class="fa-solid fa-envelope-open-text"></i> Détail du message</h2>
 
   {% if message.parent %}
-    <div style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px; border-left: 3px solid #6c757d;">
-      <small style="color: #6c757d;">
-        <i class="fa-solid fa-reply"></i> En réponse à
-        <a href="{% url 'message_detail' message.parent.pk %}">un message</a>
-        de <strong>{{ message.parent.owner.username }}</strong>
-      </small>
+    <div class="reply-banner">
+      <i class="fa-solid fa-reply"></i> En réponse à
+      <a href="{% url 'message_detail' message.parent.pk %}">un message</a>
+      de <strong>{{ message.parent.owner.username }}</strong>
     </div>
   {% endif %}
 
-  <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-    <p><strong><i class="fa-solid fa-user"></i> De :</strong> {{ message.owner.username|default:"Anonyme" }}</p>
-    {% if message.recipient %}
-      <p><strong><i class="fa-solid fa-user"></i> À :</strong> {{ message.recipient.username }}</p>
-    {% endif %}
-    <p><strong><i class="fa-regular fa-clock"></i> Date :</strong> {{ message.date_envoi|date:'d/m/Y H:i' }}</p>
-    <hr>
-    <p style="white-space: pre-wrap;">{{ message.contenu }}</p>
+  <div class="message-detail-card">
+    <div class="message-detail-header">
+      <div class="message-detail-meta">
+        <span><i class="fa-solid fa-user"></i> <strong>De :</strong> {{ message.owner.username|default:"Anonyme" }}</span>
+        <span><i class="fa-solid fa-users"></i> <strong>À :</strong> {{ message.recipient_display }}</span>
+        <span><i class="fa-regular fa-clock"></i> {{ message.date_envoi|date:'d/m/Y H:i' }}</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <p class="message-detail-content">{{ message.contenu }}</p>
   </div>
 
   {% if replies %}
-    <h3><i class="fa-solid fa-reply-all"></i> Réponses ({{ replies|length }})</h3>
+    <h3 class="section-title"><i class="fa-solid fa-reply-all"></i> Réponses ({{ replies|length }})</h3>
     {% for reply in replies %}
-      <div style="background: #f0f8ff; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid #3498db; margin-left: 20px;">
-        <p style="margin: 0 0 5px 0;">
+      <div class="reply-item">
+        <p>
           <strong>{{ reply.owner.username }}</strong>
-          <small style="color: #6c757d;">{{ reply.date_envoi|date:'d/m/Y H:i' }}</small>
+          <span class="reply-date">{{ reply.date_envoi|date:'d/m/Y H:i' }}</span>
         </p>
-        <p style="margin: 0;">{{ reply.contenu|truncatechars:200 }}</p>
-        <a href="{% url 'message_detail' reply.pk %}" style="font-size: 0.85rem;">Lire la suite</a>
+        <p>{{ reply.contenu|truncatechars:200 }}</p>
+        <a href="{% url 'message_detail' reply.pk %}" class="read-more">Lire la suite</a>
       </div>
     {% endfor %}
   {% endif %}
 
-  <div style="margin-top: 20px; display: flex; gap: 10px;">
+  <div class="detail-actions">
     {% if user == message.owner or user.is_superuser %}
-      <a href="{% url 'message_update' message.pk %}" class="btn btn-primary" style="width: auto;"><i class="fa-solid fa-pen-to-square"></i> Éditer</a>
-      <a href="{% url 'message_delete' message.pk %}" class="btn btn-danger" style="width: auto;"><i class="fa-solid fa-trash"></i> Supprimer</a>
+      <a href="{% url 'message_update' message.pk %}" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Éditer</a>
+      <a href="{% url 'message_delete' message.pk %}" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Supprimer</a>
     {% endif %}
     {% if perms.mymessages.add_message %}
-      <a href="{% url 'message_create' %}?parent={{ message.pk }}" class="btn btn-primary" style="width: auto; background-color: #17a2b8;"><i class="fa-solid fa-reply"></i> Répondre</a>
+      <a href="{% url 'message_create' %}?parent={{ message.pk }}" class="btn btn-primary" style="background-color: #0891b2;"><i class="fa-solid fa-reply"></i> Répondre</a>
     {% endif %}
-    <a href="{% url 'message_list' %}" style="margin-left: auto; padding: 8px 16px;"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+    <a href="{% url 'message_list' %}" class="back-link"><i class="fa-solid fa-arrow-left"></i> Retour</a>
   </div>
 {% endblock %}

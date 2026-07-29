@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2><i class="fa-solid fa-trash"></i> Supprimer le message ?</h2>
-  <p>
-    Vous êtes sur le point de supprimer le message : "<em>{{ object }}</em>"
-  </p>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px;"><i class="fa-solid fa-trash"></i> Supprimer</button>
-    <a href="{% url 'message_list' %}" style="margin-left: 10px;"><i class="fa-solid fa-xmark"></i> Annuler</a>
-  </form>
+  <div class="card delete-card">
+    <div class="delete-icon"><i class="fa-solid fa-trash"></i></div>
+    <h2>Supprimer le message ?</h2>
+    <p>Vous êtes sur le point de supprimer le message : "<em>{{ object }}</em>"</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="delete-actions">
+        <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Supprimer</button>
+        <a href="{% url 'message_list' %}" class="btn btn-primary">Annuler</a>
+      </div>
+    </form>
+  </div>
 {% endblock %}

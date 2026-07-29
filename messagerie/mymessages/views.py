@@ -271,8 +271,8 @@ class MessageListView(LoginRequiredMixin, ListView):
                 | Q(owner__username__icontains=search_query)
             ).distinct()
         return queryset.filter(
-            Q(owner=self.request.user) | Q(recipient=self.request.user)
-        )
+            Q(owner=self.request.user) | Q(recipient=self.request.user) | Q(recipients=self.request.user)
+        ).distinct()
 
     def get_ordering(self):
         ordering = self.request.GET.get('ordering', '-date_envoi')
@@ -286,7 +286,9 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self, *args, **kwargs):
         obj = super().get_object(*args, **kwargs)
-        if obj.recipient == self.request.user and not obj.is_read:
+        user = self.request.user
+        is_recipient = obj.recipient == user or obj.recipients.filter(pk=user.pk).exists()
+        if is_recipient and not obj.is_read:
             obj.is_read = True
             obj.save(update_fields=['is_read'])
         return obj

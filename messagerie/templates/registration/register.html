@@ -8,9 +8,9 @@
     <form method="post" class="login-form">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit" class="btn-primary">S'inscrire</button>
+      <button type="submit" class="btn-primary" style="width:100%;">S'inscrire</button>
     </form>
-    <p style="text-align: center; margin-top: 1rem;">
+    <p class="form-footer">
       Déjà un compte ? <a href="{% url 'login' %}">Connectez-vous</a>
     </p>
   </div>

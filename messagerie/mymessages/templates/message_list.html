@@ -5,44 +5,43 @@
 
 
   <div class="page-header">
-    <h2>📬 Tableau de bord des Messages</h2>
-    <div >
+    <h2><i class="fa-solid fa-envelope"></i> Messages</h2>
+    <div class="page-header-actions">
       {% if user.is_authenticated and perms.mymessages.add_message %}
-        <a href="{% url 'message_create' %}" class="btn btn-primary" style="margin-right: 10px;" title="Nouveau Message">
+        <a href="{% url 'message_create' %}" class="btn btn-primary" title="Nouveau Message">
           <i class="fa-solid fa-pen"></i>
           <span>Nouveau Message</span>
         </a>
       {% endif %}
-      <a href="{% url 'message_import' %}" class="btn btn-primary" style="margin-right: 10px; background-color: #17a2b8;" title="Importer CSV">
+      <a href="{% url 'message_import' %}" class="btn btn-primary" style="background-color: #0891b2;" title="Importer CSV">
         <i class="fa-solid fa-upload"></i>
         <span>Importer CSV</span>
       </a>
-      <a href="{% url 'export_messages_pdf' %}" class="btn btn-primary" style="background-color: #e67e22;" title="Exporter PDF">
+      <a href="{% url 'export_messages_pdf' %}" class="btn btn-primary" style="background-color: #d97706;" title="Exporter PDF">
         <i class="fa-solid fa-file-export"></i>
         <span>Exporter PDF</span>
       </a>
     </div>
   </div>
 
-  <!-- Toolbar: Recherche et Filtres -->
   <div class="toolbar">
-    <form method="get" action="" style="display: flex; gap: 10px; width: 100%; align-items: center;">
-      <input type="text" name="q" placeholder="Rechercher un contenu ou un auteur..." value="{{ request.GET.q|default_if_none:'' }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1;">
+    <form method="get" action="">
+      <input type="text" name="q" placeholder="Rechercher un contenu ou un auteur..." value="{{ request.GET.q|default_if_none:'' }}">
       
-      <select name="ordering" onchange="this.form.submit()" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <option value="-date_envoi" {% if request.GET.ordering == '-date_envoi' %}selected{% endif %}> <i class="fa-solid fa-arrow-down" style="margin-right: 5px;"></i> Plus récents</option>
-        <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}> <i class="fa-solid fa-arrow-up" style="margin-right: 5px;"></i>Plus anciens</option>
+      <select name="ordering" onchange="this.form.submit()">
+        <option value="-date_envoi" {% if request.GET.ordering == '-date_envoi' %}selected{% endif %}>Plus récents</option>
+        <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}>Plus anciens</option>
       </select>
 
-      <button type="submit" class="btn btn-primary" style="margin:0;">Filtrer</button>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Filtrer</button>
       {% if request.GET.q or request.GET.ordering %}
-        <a href="{% url 'message_list' %}" style="color: #666; text-decoration: underline; margin-left: 5px;">Réinitialiser</a>
+        <a href="{% url 'message_list' %}" class="muted" style="text-decoration: underline;">Réinitialiser</a>
       {% endif %}
       
       <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-        <input type="checkbox" id="select-all" style="cursor: pointer;">
-        <label for="select-all" style="cursor: pointer; margin: 0;">Tout</label>
-        <button type="submit" form="bulk-delete-form" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer les messages sélectionnés ?')">🗑️ Supprimer la sélection</button>
+        <input type="checkbox" id="select-all">
+        <label for="select-all" style="cursor: pointer; margin: 0; font-size:0.9rem;">Tout</label>
+        <button type="submit" form="bulk-delete-form" class="btn-danger" style="padding:0.55rem 1rem;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer les messages sélectionnés ?')"><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
       </div>
     </form>
   </div>
@@ -66,7 +65,7 @@
               {% endif %}
             </div>
             {% if message.owner == request.user %}
-              <span style="color: var(--muted); font-weight: 400;">À :</span> {{ message.recipient.username|default:"Anonyme" }}
+              <span style="color: var(--muted); font-weight: 400;">À :</span> {{ message.recipient_display }}
             {% else %}
               {{ message.owner.username|default:"Anonyme" }}
             {% endif %}
@@ -88,21 +87,18 @@
     </div>
   </form>
 
-  <!-- Pagination Stylisée -->
   {% if is_paginated %}
-    <div class="pagination" style="margin-top: 30px; display: flex; justify-content: center; gap: 5px;">
+    <div class="pagination">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">&laquo; Début</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">Précédent</a>
+        <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm">&laquo; Début</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm">Précédent</a>
       {% endif %}
 
-      <span style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
-        Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
-      </span>
+      <span class="pagination-current">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">Suivant</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm" style="background: #eee; color: #333;">Fin &raquo;</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm">Suivant</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ordering %}&ordering={{ request.GET.ordering }}{% endif %}" class="btn-sm">Fin &raquo;</a>
       {% endif %}
     </div>
   {% endif %}

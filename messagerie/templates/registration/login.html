@@ -6,16 +6,16 @@
 
 {% block content %}
   <div class="login-container">
-    <h2>Connexion</h2>
+    <h2><i class="fa-solid fa-right-to-bracket"></i> Connexion</h2>
     <form method="post" class="login-form">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit" class="btn-primary">Se connecter</button>
+      <button type="submit" class="btn-primary" style="width:100%;">Se connecter</button>
     </form>
-    <p style="text-align: center; margin-top: 1rem;">
+    <p class="form-footer">
       <a href="{% url 'password_reset' %}">Mot de passe oublié ?</a>
     </p>
-    <p style="text-align: center; margin-top: 0.5rem;">
+    <p class="form-footer">
       Pas encore de compte ? <a href="{% url 'register' %}">Inscrivez-vous</a>
     </p>
   </div>
