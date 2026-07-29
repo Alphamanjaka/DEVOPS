@@ -5,6 +5,8 @@ from mymessages.views import (
     MessageCreateView, MessageDeleteView, MessageDetailView,
     MessageListView, MessageUpdateView,
     import_messages, bulk_delete_messages, export_stats_pdf,
+)
+from mymessages.devops_views import (
     devops_dashboard, devops_deploy, devops_notify_pipeline,
 )
 
