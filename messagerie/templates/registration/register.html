@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+  <div class="login-container">
+    <h2><i class="fa-solid fa-user-plus"></i> Créer un compte</h2>
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn-primary">S'inscrire</button>
+    </form>
+    <p style="text-align: center; margin-top: 1rem;">
+      Déjà un compte ? <a href="{% url 'login' %}">Connectez-vous</a>
+    </p>
+  </div>
+{% endblock %}

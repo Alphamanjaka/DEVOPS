@@ -1,5 +1,7 @@
 import csv
+from datetime import datetime
 from django.contrib.auth.models import User
+from django.utils import timezone
 from .models import Message
 
 
@@ -20,8 +22,16 @@ class MessageImportService:
                         recipient = User.objects.filter(
                             username=row[3]).first()
 
+                    raw_date = row[1]
+                    try:
+                        parsed = datetime.fromisoformat(raw_date)
+                    except (ValueError, TypeError):
+                        parsed = datetime.strptime(raw_date, '%Y-%m-%d')
+                    if timezone.is_naive(parsed):
+                        parsed = timezone.make_aware(parsed)
+
                     Message.objects.create(
-                        contenu=row[0], date_envoi=row[1], owner=user, recipient=recipient)
+                        contenu=row[0], date_envoi=parsed, owner=user, recipient=recipient)
                     success_count += 1
                 except (User.DoesNotExist, IndexError, Exception):
                     error_count += 1

@@ -1,10 +1,13 @@
 from collections.abc import Sequence
 from typing import Any
 from django.db.models.query import QuerySet
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.core.paginator import Paginator
+from .forms import MessageForm
 import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -16,8 +19,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.db.models import Q  # Optional: for complex lookups
 from .services import MessageImportService
 from django.db.models.functions import TruncDay
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 import json
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'Compte créé avec succès. Bienvenue {user.username}!')
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
 
 
 @login_required
@@ -43,9 +58,19 @@ def home(request):
                    else 'Anonyme' for stat in user_stats]
     user_data = [stat['count'] for stat in user_stats]
 
+    paginator = Paginator(messages_liste, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        from django.template.loader import render_to_string
+        from django.http import JsonResponse
+        html = render_to_string('_message_items.html', {'messages_liste': page_obj})
+        return JsonResponse({'html': html, 'has_next': page_obj.has_next(), 'page': page_obj.next_page_number() if page_obj.has_next() else None})
+
     return render(request, 'index.html', {
-        'messages_liste': messages_liste,
-        # Vérifie si l'utilisateur a la permission d'ajouter un message
+        'messages_liste': page_obj,
+        'page_obj': page_obj,
         'can_post': request.user.has_perm('mymessages.add_message'),
         'chart_labels': json.dumps(labels),
         'chart_data': json.dumps(data),
@@ -202,11 +227,28 @@ def export_stats_pdf(request):
 
 class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Message
-    fields = ['contenu', 'recipient']
+    form_class = MessageForm
     template_name = 'message_form.html'
     success_url = '/messages/'
     permission_required = 'mymessages.add_message'
     raise_exception = True
+
+    def get_initial(self):
+        initial = super().get_initial()
+        parent_pk = self.request.GET.get('parent')
+        if parent_pk:
+            parent = get_object_or_404(Message, pk=parent_pk)
+            initial['parent'] = parent.pk
+            initial['recipient'] = parent.owner
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        parent_pk = self.request.GET.get('parent')
+        if parent_pk:
+            parent = get_object_or_404(Message, pk=parent_pk)
+            context['parent_message'] = parent
+        return context
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -242,6 +284,18 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
     template_name = 'message_detail.html'
     context_object_name = 'message'
 
+    def get_object(self, *args, **kwargs):
+        obj = super().get_object(*args, **kwargs)
+        if obj.recipient == self.request.user and not obj.is_read:
+            obj.is_read = True
+            obj.save(update_fields=['is_read'])
+        return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['replies'] = self.object.replies.all().select_related('owner', 'recipient').order_by('date_envoi')
+        return context
+
 
 class MessageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Message
@@ -258,7 +312,7 @@ class MessageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesT
 
 class MessageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Message
-    fields = ['contenu', 'recipient']
+    form_class = MessageForm
     template_name = 'message_form.html'
     success_url = '/messages/'
     permission_required = 'mymessages.change_message'
@@ -266,5 +320,4 @@ class MessageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesT
 
     def test_func(self):
         obj = self.get_object()
-        # Utilisation de getattr pour éviter les erreurs de linter (type checker)
         return getattr(obj, 'owner', None) == self.request.user or self.request.user.is_superuser

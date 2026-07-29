@@ -25,6 +25,9 @@ jobs:
         # 'docker-compose run' démarre les dépendances ('db') et exécute la commande dans un nouveau conteneur 'web'
         run: docker compose run --build --rm web python manage.py test
 
+      - name: Rapport de couverture
+        run: docker compose run --build --rm web sh -c "coverage run --source='mymessages' manage.py test && coverage report --fail-under=80"
+
   # 2. JOB DE LIVRAISON (Le Déploiement Continu - CD)
   livraison-continue:
     runs-on: ubuntu-latest

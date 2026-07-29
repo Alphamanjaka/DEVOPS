@@ -3,15 +3,26 @@
 {% block content %}
   <h2>
     {% if object %}
-      <i class="fa-solid fa-pen"></i> Modifier
+      <i class="fa-solid fa-pen"></i> Modifier le message
+    {% elif parent_message %}
+      <i class="fa-solid fa-reply"></i> Répondre
     {% else %}
-      <i class="fa-solid fa-plus"></i> Créer
-    {% endif %}a message
+      <i class="fa-solid fa-plus"></i> Nouveau message
+    {% endif %}
   </h2>
+
+  {% if parent_message %}
+    <div style="background: #f0f8ff; padding: 12px; border-radius: 5px; margin-bottom: 15px; border-left: 3px solid #3498db;">
+      <small>
+        <strong>En réponse à {{ parent_message.owner.username }} :</strong>
+        {{ parent_message.contenu|truncatechars:100 }}
+      </small>
+    </div>
+  {% endif %}
+
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-
     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Enregistrer</button>
   </form>
   <p style="margin-top:10px;">

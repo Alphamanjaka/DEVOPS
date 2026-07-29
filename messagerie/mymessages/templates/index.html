@@ -43,6 +43,14 @@
       {% endfor %}
     </ul>
 
+    {% if page_obj.has_next %}
+      <div style="margin-top: 15px; text-align: center;">
+        <button id="loadMoreBtn" class="btn btn-primary" data-page="2" style="cursor: pointer;">
+          <i class="fa-solid fa-arrow-down"></i> Voir plus
+        </button>
+      </div>
+    {% endif %}
+
     {% if can_post %}
       <div style="margin-top: 20px;">
         <a href="{% url 'message_create' %}" class="btn btn-primary" title="Poster un message">
@@ -102,6 +110,35 @@
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
+
+        var loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function() {
+                var btn = this;
+                var page = btn.getAttribute('data-page');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Chargement...';
+                fetch('?page=' + page, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var ul = btn.closest('div').previousElementSibling;
+                    ul.insertAdjacentHTML('beforeend', data.html);
+                    if (data.has_next) {
+                        btn.setAttribute('data-page', data.page);
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-arrow-down"></i> Voir plus';
+                    } else {
+                        btn.remove();
+                    }
+                })
+                .catch(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrow-down"></i> Voir plus (erreur)';
+                });
+            });
+        }
     });
 </script>
 {% endblock %}

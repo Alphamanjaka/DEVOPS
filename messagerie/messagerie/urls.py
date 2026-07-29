@@ -18,6 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import health_check
 from mymessages import views
+from mymessages.views import register
+from rest_framework.routers import DefaultRouter
+from mymessages.api import MessageViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+router = DefaultRouter()
+router.register(r'messages', MessageViewSet, basename='api_message')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,5 +34,9 @@ urlpatterns = [
     path('import/', views.import_messages, name='import_messages'),
     path('health/', health_check),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/register/', register, name='register'),
     path('messages/', include('mymessages.urls')),
+    path('api/', include(router.urls)),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]

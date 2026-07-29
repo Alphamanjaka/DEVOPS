@@ -52,23 +52,23 @@
     {% csrf_token %}
     <div class="email-list">
     {% for message in messages %}
-      <div class="email-item">
+      <div class="email-item{% if not message.is_read and message.recipient == user %} unread{% endif %}">
         <div style="margin-right: 15px;">
           <input type="checkbox" name="message_ids" value="{{ message.pk }}">
         </div>
         <a href="{% url 'message_detail' message.pk %}" style="display: flex; flex: 1; align-items: center; text-decoration: none; color: inherit;">
           <div class="email-sender">
             <div class="sender-avatar">
-              {% if message.sender == request.user %}
+              {% if message.owner == request.user %}
                 {{ message.recipient.username|first|upper|default:"?" }}
               {% else %}
-                {{ message.sender.username|first|upper|default:"?" }}
+                {{ message.owner.username|first|upper|default:"?" }}
               {% endif %}
             </div>
-            {% if message.sender == request.user %}
-              À : {{ message.recipient.username|default:"Anonyme" }}
+            {% if message.owner == request.user %}
+              <span style="color: var(--muted); font-weight: 400;">À :</span> {{ message.recipient.username|default:"Anonyme" }}
             {% else %}
-              {{ message.sender.username|default:"Anonyme" }}
+              {{ message.owner.username|default:"Anonyme" }}
             {% endif %}
           </div>
           <div class="email-content">

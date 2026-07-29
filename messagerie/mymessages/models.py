@@ -8,6 +8,9 @@ class Message(models.Model):
     date_envoi = models.DateTimeField(default=timezone.now)
     owner = models.ForeignKey('auth.User', on_delete=models.CASCADE, null=True, blank=True)
     recipient = models.ForeignKey('auth.User', related_name='received_messages', on_delete=models.CASCADE, null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
+
     def __str__(self):
         return self.contenu[:20]
     

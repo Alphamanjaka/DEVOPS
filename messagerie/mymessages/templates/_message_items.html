@@ -1,0 +1,10 @@
+{% for message in messages_liste %}
+  <li style="background: var(--bg-main); border-bottom: 1px solid var(--border-color); padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <strong><i class="fa-solid fa-user"></i> {{ message.owner.username|default:'Anonyme' }}</strong> : {{ message.contenu|truncatechars:80 }}
+    </div>
+    <small style="color: var(--text-sidebar);"><i class="fa-regular fa-clock"></i> {{ message.date_envoi|date:'d/m/Y H:i' }}</small>
+  </li>
+{% empty %}
+  <li>Aucun message pour le moment.</li>
+{% endfor %}

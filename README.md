@@ -1,135 +1,190 @@
-# Démonstration Technique : Pipeline DevOps & Application de Messagerie
+# Messagerie DevOps
 
-Ce projet est une démonstration technique d'une chaîne **DevOps complète** appliquée à une application web Django. L'objectif est de montrer l'automatisation des tests, la conteneurisation et le déploiement continu, ainsi que des fonctionnalités applicatives spécifiques.
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Django](https://img.shields.io/badge/django-6.0-green)
+![PostgreSQL](https://img.shields.io/badge/postgresql-15-316192)
+![License](https://img.shields.io/badge/license-MIT-yellow)
 
-## Architecture & Technologies
-
-- **Backend :** Django (Python) avec Gunicorn.
-- **Base de données :** PostgreSQL 15.
-- **Conteneurisation :** Docker & Docker Compose.
-- **CI/CD :** GitHub Actions.
-- **Frontend :** HTML5, CSS3 (Responsive), FontAwesome.
+Application de messagerie avec pipeline CI/CD complet — démonstration technique DevOps (Master 2, Architecture Logicielle).
 
 ---
 
-## 🚀 Pipeline CI/CD (GitHub Actions)
+## Architecture
 
-Le workflow est défini dans `.github/workflows/ci.yml` et se divise en deux étapes majeures :
+```mermaid
+graph TD
+    subgraph "Frontend"
+        A[HTML5 + CSS3] --> B[Django Templates]
+        C[Chart.js] --> B
+        D[FontAwesome] --> B
+    end
+
+    subgraph "Backend Django"
+        B --> E[Views]
+        E --> F[Models]
+        E --> G[REST API DRF]
+        F --> H[(PostgreSQL)]
+        G --> I[Swagger Docs]
+    end
+
+    subgraph "DevOps"
+        J[GitHub Actions] --> K[Docker Compose]
+        K --> L[Tests Unitaires]
+        L --> M[Coverage ≥80%]
+        M --> N[GHCR Registry]
+    end
+
+    subgraph "Fonctionnalités"
+        O[Inscription] --> E
+        P[Dark Mode] --> B
+        Q[Reply/Thread] --> F
+        R[Read/Unread] --> F
+        S[Pagination AJAX] --> E
+        T[Email Notification] --> F
+    end
+```
+
+---
+
+## Stack Technique
+
+| Couche | Technologie |
+|---|---|
+| **Backend** | Django 6.0, DRF 3.16, Gunicorn |
+| **Base de données** | PostgreSQL 15 |
+| **Frontend** | HTML5, CSS3 (variables CSS), Chart.js, FontAwesome |
+| **API** | REST (JSON) + Swagger/OpenAPI |
+| **Conteneurisation** | Docker, Docker Compose |
+| **CI/CD** | GitHub Actions → GHCR |
+| **Tests** | unittest, coverage.py (seuil ≥80%) |
+
+---
+
+## Fonctionnalités
+
+### Core
+- **CRUD** messages avec permissions granulaire (`add_message`, `change_message`, `delete_message`)
+- **Inscription** utilisateur via formulaire dédié
+- **Read/Unread** — marquage automatique à la lecture + badge notification
+- **Reply/Thread** — système de réponse avec parent/child
+- **Recherche** full-text dans la liste des messages
+- **Dashboard** admin avec graphiques Chart.js (activité par jour, répartition par utilisateur)
+- **Pagination AJAX** bouton "Voir plus" sans rechargement
+
+### Import/Export
+- **Import CSV** — upload en masse avec validation des utilisateurs
+- **Export PDF** — messages personnels + rapport statistique
+
+### API REST
+- Endpoint `/api/messages/` avec authentication session/Basic
+- Pagination, filtrage, throttling (100/h user, 20/h anon)
+- Documentation Swagger sur `/api/docs/`
+
+### UX
+- **Dark mode** persisté dans localStorage avec toggle
+- **Design responsive** sidebar adaptative
+- **Notifications email** via signal `post_save`
+
+---
+
+## Pipeline CI/CD
+
+### Workflow (`.github/workflows/ci.yml`)
 
 ```mermaid
 flowchart LR
-    %% Déclencheur
-    Trigger([Push sur branche 'main']) --> CI
+    Push([Push sur main]) --> CI
 
-    %% Job 1 : Intégration Continue
     subgraph CI [Job: Intégration Continue]
-        direction TB
-        Step1[Checkout Code] --> Step2[Création .env Test]
-        Step2 --> Step3[Tests Unitaires<br/>(Docker Compose)]
+        Checkout[Checkout] --> Env[Création .env test]
+        Env --> Test[Tests unitaires<br> Docker Compose]
+        Test --> Cov[Coverage ≥80%]
     end
 
-    %% Condition de transition
-    CI -- Si Succès --> CD
-    CI -- Si Échec --> Fail([Arrêt du Pipeline])
+    CI -- Succès --> CD
+    CI -- Échec --> Fail([Arrêt])
 
-    %% Job 2 : Livraison Continue
     subgraph CD [Job: Livraison Continue]
-        direction TB
-        Step4[Checkout Code] --> Step5[Login GHCR]
-        Step5 --> Step6[Build Image Prod]
-        Step6 --> Step7[Push Image vers Registry]
+        Login[Login GHCR] --> Build[Build Image]
+        Build --> Push[Push vers Registry]
     end
 
-    %% Résultat final
-    CD --> Success([Image prête à déployer<br/>sur GHCR])
-
-    %% Styles pour la lisibilité
-    classDef success fill:#e6fffa,stroke:#2c7a7b,stroke-width:2px;
-    classDef failure fill:#fff5f5,stroke:#c53030,stroke-width:2px;
-    classDef process fill:#ebf8ff,stroke:#2b6cb0,stroke-width:2px;
-
-    class Trigger,Success success
-    class Fail failure
-    class Step1,Step2,Step3,Step4,Step5,Step6,Step7 process
+    CD --> Success([Image prête sur GHCR])
 ```
 
-### 1. Intégration Continue (CI)
-
-À chaque `push` sur la branche `main` :
-
-- **Environnement de Test :** Création dynamique d'un fichier `.env` sécurisé pour l'environnement de test.
-- **Dockerisation des Tests :** Utilisation de `docker compose run` pour monter les services (Postgres + Django).
-- **Exécution :** Lancement automatique des tests unitaires (`python manage.py test`).
-
-### 2. Livraison Continue (CD)
-
-_Condition :_ Ne s'exécute que si la CI réussit.
-
-- **Authentification :** Connexion sécurisée au **GitHub Container Registry (GHCR)**.
-- **Build & Push :** Construction de l'image Docker de production et publication sur le registre (`ghcr.io/...`).
+- **CI** : `docker compose run --build --rm web python manage.py test` + `coverage run --fail-under=80`
+- **CD** : Build & push vers `ghcr.io/<repo>` (nécessite `integration-continue`)
 
 ---
 
-## 🐳 Configuration Docker
+## Sécurité
 
-L'application est entièrement conteneurisée pour garantir la cohérence entre le développement et la production.
-
-- **Orchestration :** Le fichier `docker-compose.yml` gère les services `db` (Postgres) et `web` (Django).
-- **Script de Démarrage (`build.sh`) :**
-  - Application automatique des migrations (`migrate`).
-  - Collecte des fichiers statiques (`collectstatic`).
-  - Création conditionnelle d'un superutilisateur.
-  - Lancement du serveur de production **Gunicorn**.
-- **Hot Reload (Dev) :** Utilisation de `develop.watch` dans Docker Compose pour synchroniser les changements de code en temps réel sans reconstruire l'image.
+| Setting | Défaut | Prod (via env) |
+|---|---|---|
+| `SECURE_HSTS_SECONDS` | 0 | 31536000 |
+| `SECURE_SSL_REDIRECT` | False | True |
+| `SESSION_COOKIE_SECURE` | False | True |
+| `CSRF_COOKIE_SECURE` | False | True |
 
 ---
 
-## ✨ Fonctionnalités de l'Application
+## Démarrer en local
 
-### Importation de Messages (CSV)
+```bash
+# 1. Cloner
+git clone <repo-url> && cd <repo>
 
-L'application dispose d'un module d'importation de données en masse.
+# 2. Config
+cp .env.example .env
 
-- **Format supporté :** `Contenu du message, AAAA-MM-JJ HH:MM:SS, Username`
-- **Interface :** Formulaire dédié avec gestion des erreurs et messages flash (Succès/Avertissement/Erreur).
+# 3. Lancer
+docker compose up --build
+```
 
-### Interface Utilisateur (UI/UX)
-
-- **Design Responsive :** Sidebar adaptative (mobile/desktop) gérée via CSS (`style.css`).
-- **Thème :** Utilisation de variables CSS pour une maintenance facile des couleurs.
-
----
-
-## 📸 Captures d'écran
-
-<!--
-INSTRUCTIONS POUR AJOUTER VOS IMAGES :
-1. Créez un dossier nommé "screenshots" à la racine du projet.
-2. Mettez vos images dedans (ex: pipeline.png, import.png).
-3. Décommentez les lignes ci-dessous.
--->
-
-### Pipeline GitHub Actions
-
-<!-- !Pipeline CI/CD -->
-
-_Vue du workflow réussissant les étapes de test et de déploiement._
-
-### Interface d'Import CSV
-
-<!-- !Import CSV -->
-
-_Formulaire d'importation avec feedback utilisateur._
+Accès : `http://localhost:8000`  
+Admin : `python manage.py createsuperuser`
 
 ---
 
-## Comment lancer le projet en local
+## Tests
 
-1. **Cloner le dépôt :**
-   ```bash
-   git clone <votre-url-repo>
-   ```
-2. **Lancer avec Docker Compose :**
-   ```bash
-   docker compose up --build
-   ```
+```bash
+docker compose run --rm web python manage.py test
+
+# Avec couverture
+docker compose run --rm web sh -c "coverage run --source='mymessages' manage.py test && coverage report"
+```
+
+**34 tests — 94% coverage** (core business logic 100%).
+
+---
+
+## API
+
+| Méthode | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/messages/` | Oui | Liste paginée |
+| POST | `/api/messages/` | Oui | Créer un message |
+| GET | `/api/messages/{id}/` | Oui | Détail |
+| PUT/PATCH | `/api/messages/{id}/` | Oui | Modifier |
+| DELETE | `/api/messages/{id}/` | Oui | Supprimer |
+| GET | `/api/schema/` | Oui | OpenAPI Schema |
+| GET | `/api/docs/` | Oui | Swagger UI |
+
+---
+
+## Roadmap
+
+- [x] Bugfixes (sender→owner, templates, i18n)
+- [x] Inscription utilisateur
+- [x] Read/Unread + badge notification
+- [x] Reply/thread system
+- [x] REST API + Swagger
+- [x] Dark mode
+- [x] Email notification (signal)
+- [x] Throttling + Pagination
+- [x] Tests coverage ≥80%
+- [x] AJAX pagination (Load more)
+- [ ] CI/CD déploiement automatique Render

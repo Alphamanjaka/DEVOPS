@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Delete message ?</h2>
+  <h2><i class="fa-solid fa-trash"></i> Supprimer le message ?</h2>
   <p>
-    You are about to delete the message: "<em>{{ object }}</em>" ?
+    Vous êtes sur le point de supprimer le message : "<em>{{ object }}</em>"
   </p>
   <form method="post">
     {% csrf_token %}
-    <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px;">Delete</button>
-    <a href="{% url 'message_list' %}" style="margin-left: 10px;">Annuler</a>
+    <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px;"><i class="fa-solid fa-trash"></i> Supprimer</button>
+    <a href="{% url 'message_list' %}" style="margin-left: 10px;"><i class="fa-solid fa-xmark"></i> Annuler</a>
   </form>
 {% endblock %}

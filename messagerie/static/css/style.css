@@ -17,6 +17,24 @@
     --shadow-elev: 0 4px 15px rgba(0,0,0,0.08);
 }
 
+[data-theme="dark"] {
+    --bg-body: #1a1d23;
+    --bg-header: #14171c;
+    --text-header: #e1e4e8;
+    --bg-sidebar: #21252b;
+    --text-sidebar: #c8ccd0;
+    --bg-main: #2d333b;
+    --text-main: #e1e4e8;
+    --border-color: #444c56;
+    --hover-bg: #373e47;
+    --link-color: #58a6ff;
+    --card-bg: #2d333b;
+    --muted: #8b949e;
+    --btn-primary-bg: #58a6ff;
+    --btn-primary-text: #0d1117;
+    --shadow-elev: 0 4px 15px rgba(0,0,0,0.3);
+}
+
 /* Page base */
 body {
     margin: 0;
@@ -235,4 +253,31 @@ input:focus {
 
   a{
     text-decoration: none;
+  }
+
+  .badge {
+    display: inline-block;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    padding: 1px 7px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-left: 6px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .email-item.unread {
+    background-color: rgba(52, 152, 219, 0.05);
+    border-left: 3px solid #3498db;
+  }
+
+  .email-item.unread .email-subject {
+    font-weight: 700;
+  }
+
+  .email-item.unread .email-sender {
+    font-weight: 700;
   }
