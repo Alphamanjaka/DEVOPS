@@ -32,6 +32,14 @@ jobs:
       - name: Démarrage des services
         run: docker compose up -d db
 
+      - name: Attente que la base soit prête
+        run: |
+          for i in $(seq 1 30); do
+            docker compose exec -T db pg_isready -U test_user -d test_db && break
+            echo "Attente de la base... ($i/30)"
+            sleep 2
+          done
+
       - name: Exécution des migrations
         run: docker compose run --rm web python manage.py migrate --noinput
 
