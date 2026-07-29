@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+  <h2><i class="fa-solid fa-cloud"></i> DevOps Dashboard</h2>
+  <a href="{% url 'devops_deploy' %}" class="btn btn-primary"><i class="fa-solid fa-rocket"></i> Nouveau déploiement</a>
+</div>
+
+<div class="dashboard-grid">
+  <div class="card">
+    <h3 class="card-title"><i class="fa-solid fa-heart-pulse"></i> Santé des services</h3>
+    <div class="service-list">
+      {% for s in services %}
+      <div class="service-item">
+        <div class="service-left">
+          <span class="service-dot service-{{ s.status }}"></span>
+          <i class="fa-solid {{ s.icon }}"></i>
+          <strong>{{ s.name }}</strong>
+        </div>
+        <span class="service-info">{{ s.info|default:s.status|upper }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title"><i class="fa-solid fa-chart-bar"></i> Pipelines CI</h3>
+    <div class="pipeline-stats">
+      <div class="stat-box stat-ok">{{ pipeline_stats.success }} <small>succès</small></div>
+      <div class="stat-box stat-fail">{{ pipeline_stats.fail }} <small>échec</small></div>
+      <div class="stat-box stat-run">{{ pipeline_stats.running }} <small>en cours</small></div>
+    </div>
+    <div class="pipeline-list">
+      {% for p in pipelines %}
+      <div class="pipeline-item">
+        <span class="pipeline-status pipeline-{{ p.status }}"></span>
+        <div class="pipeline-body">
+          <div class="pipeline-top">
+            <strong>{{ p.name }}</strong>
+            <span class="pipeline-commit">{{ p.commit }}</span>
+          </div>
+          <div class="pipeline-meta">
+            <span>{{ p.branch }}</span>
+            <span>{{ p.author }}</span>
+            <span>{{ p.duration }}</span>
+            <span>{{ p.time|timesince }}</span>
+          </div>
+        </div>
+        <form method="post" action="{% url 'devops_notify_pipeline' %}" style="display:inline">
+          {% csrf_token %}
+          <input type="hidden" name="pipeline" value="{{ p.name }}">
+          <input type="hidden" name="status" value="{{ p.status }}">
+          <button class="btn-notify" title="Notifier l'équipe"><i class="fa-solid fa-bell"></i></button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+  <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Historique des déploiements</h3>
+  <table class="deploy-table">
+    <thead>
+      <tr>
+        <th>Version</th>
+        <th>Environnement</th>
+        <th>Statut</th>
+        <th>Par</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in deployments %}
+      <tr>
+        <td><code>{{ d.version }}</code></td>
+        <td><span class="env-tag env-{{ d.env }}">{{ d.env }}</span></td>
+        <td><span class="status-tag status-{{ d.status }}">{{ d.status }}</span></td>
+        <td>{{ d.by }}</td>
+        <td class="muted">{{ d.time|timesince }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

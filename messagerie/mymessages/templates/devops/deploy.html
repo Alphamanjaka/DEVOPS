@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+  <h2><i class="fa-solid fa-rocket"></i> Nouveau déploiement</h2>
+  <a href="{% url 'devops_dashboard' %}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="card form-card" style="max-width:500px;">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label>Environnement</label>
+      <select name="environment" required>
+        <option value="staging">Staging</option>
+        <option value="production">Production</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Branche</label>
+      <select name="branch" required>
+        <option value="main">main</option>
+        <option value="develop">develop</option>
+        <option value="feature/*">feature/*</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Version (optionnel)</label>
+      <input type="text" name="version" placeholder="v2.5.0" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Lancer le déploiement</button>
+      <a href="{% url 'devops_dashboard' %}" class="btn btn-outline">Annuler</a>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top:1.5rem; max-width:500px;">
+  <h3 class="card-title"><i class="fa-solid fa-info-circle"></i> À savoir</h3>
+  <ul style="margin:0;padding-left:1.25rem;font-size:0.9rem;color:var(--text-sidebar);line-height:1.8;">
+    <li>Un message sera envoyé à <strong>tous les utilisateurs actifs</strong></li>
+    <li>Le déploiement est simulé (aucun réel impact)</li>
+    <li>Utilise le webhook GitHub pour des notifications automatiques</li>
+  </ul>
+</div>
+
+{% endblock %}

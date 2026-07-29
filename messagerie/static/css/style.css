@@ -755,6 +755,180 @@ select:focus {
     margin-top: 0.5rem;
 }
 
+.form-group select,
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease;
+}
+.form-group select:focus,
+.form-group input[type="text"]:focus {
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    outline: none;
+}
+
+/* ---- DevOps Dashboard ---- */
+.service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.service-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-body);
+    font-size: 0.88rem;
+    gap: 1rem;
+}
+.service-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.service-left i {
+    width: 16px;
+    text-align: center;
+    color: var(--muted);
+}
+.service-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.service-up  { background: #16a34a; }
+.service-down { background: #dc2626; }
+.service-warn { background: #d97706; }
+.service-info { font-size: 0.82rem; color: var(--muted); }
+
+.pipeline-stats {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.stat-box {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+}
+.stat-box small { display: block; font-size: 0.7rem; font-weight: 400; opacity: 0.85; }
+.stat-ok  { background: #16a34a; }
+.stat-fail { background: #dc2626; }
+.stat-run { background: #2563eb; }
+
+.pipeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.pipeline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-body);
+    transition: background 0.12s ease;
+}
+.pipeline-item:hover { background: var(--hover-bg); }
+.pipeline-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.pipeline-success { background: #16a34a; }
+.pipeline-fail    { background: #dc2626; }
+.pipeline-running { background: #2563eb; animation: pulse 1.2s infinite; }
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+}
+.pipeline-body { flex: 1; min-width: 0; }
+.pipeline-top {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+}
+.pipeline-commit {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.pipeline-meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+.btn-notify {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.12s ease;
+}
+.btn-notify:hover {
+    border-color: var(--link-color);
+    color: var(--link-color);
+}
+
+.deploy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+.deploy-table th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-color);
+}
+.deploy-table td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+.deploy-table code {
+    background: var(--bg-sidebar);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+}
+.env-tag, .status-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.env-production { background: #dbeafe; color: #1e40af; }
+.env-staging    { background: #fef3c7; color: #92400e; }
+.status-success { background: #d1fae5; color: #065f46; }
+.status-fail    { background: #fee2e2; color: #991b1b; }
+.status-running { background: #dbeafe; color: #1e40af; }
+
 .form-footer {
     text-align: center;
     margin-top: 1.25rem;

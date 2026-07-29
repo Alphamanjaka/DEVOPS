@@ -76,6 +76,23 @@
         </div>
 
         <div class="sidebar-section">
+          <h3><i class="fa-solid fa-cloud"></i> DevOps</h3>
+          <nav>
+            <ul>
+              <li>
+                <a href="{% url 'devops_dashboard' %}"><i class="fa-solid fa-gauge-high"></i> Dashboard DevOps</a>
+              </li>
+              <li>
+                <a href="{% url 'devops_deploy' %}"><i class="fa-solid fa-rocket"></i> Déploiement</a>
+              </li>
+              <li>
+                <a href="{% url 'github_webhook' %}"><i class="fa-brands fa-github"></i> Webhook GitHub</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        <div class="sidebar-section">
           <h3><i class="fa-solid fa-cog"></i> Administration</h3>
           <nav>
             <ul>
