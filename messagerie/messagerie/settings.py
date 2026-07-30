@@ -29,6 +29,18 @@ DEBUG = os.environ.get('DEBUG', '0') == '1'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.onrender.com,localhost,127.0.0.1').split(',')
 
+# Diagnostic: log de la config DB au démarrage (sans le mot de passe)
+try:
+    _db_url = os.environ.get('DATABASE_URL', '')
+    if _db_url:
+        from urllib.parse import urlparse
+        _parsed = urlparse(_db_url)
+        print(f"[SETTINGS] DB Host={_parsed.hostname} Port={_parsed.port or 5432} User={_parsed.username} DB={_parsed.path.lstrip('/')} SSL=require")
+    else:
+        print(f"[SETTINGS] DB Host={os.environ.get('DB_HOST', 'localhost')} Port={os.environ.get('DB_PORT', '5432')} User={os.environ.get('POSTGRES_USER', '?')} DB={os.environ.get('POSTGRES_DB', '?')}")
+except Exception:
+    print("[SETTINGS] DB configuration: unable to parse DATABASE_URL")
+
 SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
 SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', '0') == '1'
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', '0') == '1'

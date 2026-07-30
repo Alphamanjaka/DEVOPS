@@ -1,20 +1,50 @@
 #!/bin/sh
+set -e
 
-# Ce script est exécuté par le conteneur 'web' au démarrage.
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
 
-# Appliquer les migrations de la base de données
-echo "Applying database migrations..."
-python manage.py makemigrations
-python manage.py migrate --noinput
+# Attendre que la base de données soit joignable
+log "Waiting for database..."
+RETRIES=30
+i=0
+until python -c "
+import os, sys
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'messagerie.settings')
+import django; django.setup()
+from django.db import connection
+connection.ensure_connection()
+sys.exit(0)
+" 2>/dev/null; do
+  i=$((i + 1))
+  if [ $i -ge $RETRIES ]; then
+    log "ERROR: Database not reachable after $RETRIES attempts (host: $(python -c "import os; print(os.environ.get('DB_HOST', os.environ.get('DATABASE_URL', '?')))" 2>/dev/null || echo 'unknown'))"
+    log "WARNING: Starting without database – app will be in degraded mode."
+    break
+  fi
+  log "Database not ready yet (attempt $i/$RETRIES)..."
+  sleep 2
+done
 
-# Collecter les fichiers statiques
-echo "Collecting static files..."
+if [ $i -lt $RETRIES ]; then
+  log "Database is reachable."
+
+  # Appliquer les migrations
+  log "Applying database migrations..."
+  python manage.py migrate --noinput
+
+  # Créer un superutilisateur par défaut si nécessaire
+  log "Creating default superuser..."
+  python manage.py createsuperuser --no-input || true
+else
+  log "Skipping migrations and superuser creation (database unavailable)."
+fi
+
+# Collecter les fichiers statiques (ne nécessite pas de base)
+log "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Créer un superutilisateur par défaut si nécessaire
-echo "Creating default superuser..."
-python manage.py createsuperuser --no-input || true
-
-# Lancer Gunicorn pour servir l'application
-echo "Starting Gunicorn..."
-gunicorn --bind 0.0.0.0:8000 --reload messagerie.wsgi:application
+# Lancer Gunicorn
+log "Starting Gunicorn..."
+exec gunicorn --bind 0.0.0.0:8000 --reload messagerie.wsgi:application

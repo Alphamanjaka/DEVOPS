@@ -6,3 +6,4 @@ __pycache__/
 /messagerie/mymessages/__pycache__
 *.pyc
 messagerie/mymessages/__pycache__/admin.cpython-313.pyc
+messagerie/messagerie/__pycache__/settings.cpython-313.pyc
