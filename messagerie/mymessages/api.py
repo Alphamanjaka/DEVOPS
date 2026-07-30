@@ -18,7 +18,7 @@ class MessageSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['owner', 'date_envoi', 'is_read']
 
-    def get_recipients_username(self, obj):
+    def get_recipients_username(self, obj) -> list[str]:
         return [u.username for u in obj.recipients.all()]
 
 

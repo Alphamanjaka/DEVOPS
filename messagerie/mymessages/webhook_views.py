@@ -6,7 +6,6 @@ import os
 from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 
 from .models import Message
 
@@ -20,8 +19,9 @@ def _get_bot_user():
 
 
 @csrf_exempt
-@require_POST
 def github_webhook(request):
+    if request.method == 'GET':
+        return JsonResponse({'message': 'Webhook GitHub: utilisez POST avec un payload GitHub.'})
     secret = os.environ.get('GITHUB_WEBHOOK_SECRET')
     if not secret:
         return HttpResponse('GITHUB_WEBHOOK_SECRET not configured', status=500)
