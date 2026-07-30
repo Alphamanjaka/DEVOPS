@@ -27,7 +27,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '0') == '1'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.onrender.com,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS', '.onrender.com,localhost,127.0.0.1').split(',')
 
 # Diagnostic: log de la config DB au démarrage (sans le mot de passe)
 try:
@@ -35,7 +36,8 @@ try:
     if _db_url:
         from urllib.parse import urlparse
         _parsed = urlparse(_db_url)
-        print(f"[SETTINGS] DB Host={_parsed.hostname} Port={_parsed.port or 5432} User={_parsed.username} DB={_parsed.path.lstrip('/')} SSL=require")
+        print(
+            f"[SETTINGS] DB Host={_parsed.hostname} Port={_parsed.port or 5432} User={_parsed.username} DB={_parsed.path.lstrip('/')} SSL=require")
     else:
         print(f"[SETTINGS] DB Host={os.environ.get('DB_HOST', 'localhost')} Port={os.environ.get('DB_PORT', '5432')} User={os.environ.get('POSTGRES_USER', '?')} DB={os.environ.get('POSTGRES_DB', '?')}")
 except Exception:
@@ -50,6 +52,7 @@ CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', '0') == '1'
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -91,6 +94,29 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'messagerie.wsgi.application'
+
+# Définir l'application ASGI pour Channels
+ASGI_APPLICATION = 'messagerie.asgi.application'
+
+# Configuration du Channel Layer pour la communication entre consumers
+# Utilise Redis en production (REDIS_HOST défini) ou InMemoryChannelLayer en local
+REDIS_HOST = os.environ.get('REDIS_HOST')
+if REDIS_HOST:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                # L'hôte 'redis' correspondra au nom du service dans docker-compose
+                "hosts": [(REDIS_HOST, 6379)],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 
 # Database

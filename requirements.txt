@@ -37,3 +37,7 @@ djangorestframework==3.16.0
 drf-spectacular==0.28.0
 
 pre-commit==4.2.0
+
+channels==4.0.0
+channels-redis==4.2.0
+uvicorn[standard]==0.29.0

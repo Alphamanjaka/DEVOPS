@@ -45,6 +45,6 @@ fi
 log "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Lancer Gunicorn
-log "Starting Gunicorn..."
-exec gunicorn --bind 0.0.0.0:8000 --reload messagerie.wsgi:application
+# Lancer Gunicorn avec Uvicorn worker (ASGI)
+log "Starting Gunicorn with Uvicorn worker..."
+exec gunicorn --bind 0.0.0.0:8000 --reload -k uvicorn.workers.UvicornWorker messagerie.asgi:application

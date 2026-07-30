@@ -16,10 +16,11 @@ Application de messagerie avec pipeline CI/CD complet — démonstration techniq
 
 | Couche | Technologie |
 |---|---|
-| **Backend** | Django 6.0.4, DRF 3.16, Gunicorn |
+| **Backend** | Django 6.0.4, DRF 3.16, Gunicorn + Uvicorn (ASGI) |
+| **Temps réel** | Django Channels 4.0, Redis (production) / InMemoryChannelLayer (dev) |
 | **Base de données** | PostgreSQL 15 (Render Managed) |
 | **Frontend** | HTML5, CSS3 (variables CSS), Chart.js, FontAwesome |
-| **API** | REST (JSON) + Swagger/OpenAPI |
+| **API** | REST (JSON) + Swagger/OpenAPI + WebSocket (WS/WSS) |
 | **Conteneurisation** | Docker multi-stage, Docker Compose |
 | **CI/CD** | GitHub Actions → GHCR |
 | **Tests** | unittest, coverage.py (seuil ≥70%) |
@@ -139,6 +140,16 @@ docker compose up --build
 
 Accès : `http://localhost:8000`
 
+### Infrastructure Docker Compose
+
+| Service | Image | Rôle |
+|---|---|---|
+| `db` | postgres:15 | Base de données |
+| `redis` | redis:7-alpine | Channel layer WebSocket |
+| `web` | custom (multi-stage) | App Django + Gunicorn/Uvicorn (ASGI) |
+
+En local sans Redis, le channel layer utilise automatiquement `InMemoryChannelLayer`. Pour activer Redis, définir `REDIS_HOST` dans `.env`.
+
 ---
 
 ## Tests
@@ -171,6 +182,13 @@ docker compose run --rm web python seed_data.py
 | GET | `/api/schema/` | Oui | OpenAPI Schema |
 | GET | `/api/docs/` | Oui | Swagger UI |
 
+### WebSocket (temps réel)
+
+| Endpoint | Protocole | Auth | Description |
+|---|---|---|---|
+| `ws://host/ws/notifications/` | WebSocket | Session | Notifications instantanées par utilisateur |
+| `ws://host/ws/chat/{room}/` | WebSocket | Session | Salon de chat temps réel |
+
 ### Webhook GitHub
 
 | Méthode | Endpoint | Description |
@@ -200,6 +218,14 @@ docker compose run --rm web python seed_data.py
 - Design responsive
 - Notification email via signal post_save
 
+### Temps réel (WebSocket)
+- Notifications instantanées quand un message est reçu
+- Toast cliquable avec aperçu du message
+- Mise à jour automatique du badge de notifications
+- Reconnexion automatique WebSocket (3s)
+- Fonctionne sans Redis en dev (InMemoryChannelLayer)
+- Architecture : `NotificationConsumer` (par utilisateur) + `ChatConsumer` (par salon)
+
 ---
 
 ## Roadmap
@@ -221,3 +247,7 @@ docker compose run --rm web python seed_data.py
 - [x] Scan sécurité Docker (Trivy)
 - [x] Logging applicatif complet
 - [x] Gestion d'erreurs (400/403/404/500)
+- [x] WebSocket temps réel (Django Channels + NotificationConsumer)
+- [x] Notifications instantanées avec toasts cliquables
+- [x] Reconnexion automatique WebSocket
+- [x] Mode dégradé sans Redis (InMemoryChannelLayer)

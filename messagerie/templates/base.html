@@ -135,6 +135,7 @@
         {% endblock %}
       </main>
     </div>
+    <div id="toast-container"></div>
     <footer>
       <p>&copy; 2025 Messagerie DevOps - Tous droits réservés.</p>
     </footer>
@@ -157,5 +158,86 @@
         }
       })();
     </script>
+
+    {% if user.is_authenticated %}
+    <script>
+    (function() {
+      var wsScheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+      var wsUrl = wsScheme + window.location.host + '/ws/notifications/';
+      var socket = null;
+      var reconnectTimer = null;
+
+      function connect() {
+        try {
+          socket = new WebSocket(wsUrl);
+        } catch(e) {
+          return;
+        }
+
+        socket.onopen = function() {
+          if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+        };
+
+        socket.onmessage = function(e) {
+          var data = JSON.parse(e.data);
+          if (data.type === 'new_message') {
+            showToast(data);
+            updateBadge();
+          }
+        };
+
+        socket.onclose = function() {
+          if (!reconnectTimer) {
+            reconnectTimer = setTimeout(connect, 3000);
+          }
+        };
+      }
+
+      function showToast(data) {
+        var container = document.getElementById('toast-container');
+        if (!container) return;
+
+        var el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML =
+          '<i class="fa-solid fa-envelope" style="color: var(--link-color);"></i>' +
+          '<div class="toast-body">' +
+            '<div class="toast-title">Nouveau message de ' + escapeHtml(data.from) + '</div>' +
+            '<div class="toast-preview">' + escapeHtml(data.preview) + '</div>' +
+          '</div>' +
+          '<button class="toast-close" onclick="dismissToast(this.parentElement)"><i class="fa-solid fa-xmark"></i></button>';
+        el.addEventListener('click', function(ev) {
+          if (ev.target.closest('.toast-close')) return;
+          window.location.href = '/messages/' + data.message_id + '/';
+        });
+        container.appendChild(el);
+
+        setTimeout(function() { dismissToast(el); }, 6000);
+      }
+
+      function dismissToast(el) {
+        el.classList.add('toast-leaving');
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
+      }
+
+      function updateBadge() {
+        var badge = document.querySelector('.badge');
+        if (badge) {
+          var count = parseInt(badge.textContent, 10) || 0;
+          badge.textContent = count + 1;
+        }
+      }
+
+      function escapeHtml(text) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(text));
+        return d.innerHTML;
+      }
+
+      connect();
+    })();
+    </script>
+    {% endif %}
+
   </body>
 </html>
