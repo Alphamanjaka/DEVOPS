@@ -2,7 +2,7 @@ arrow==1.4.0
 asgiref==3.11.0
 binaryornot==0.4.4
 certifi==2025.11.12
-chardet==5.2.0
+chardet==7.4.3
 charset-normalizer==3.4.4
 click==8.3.1
 colorama==0.4.6
