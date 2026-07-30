@@ -27,7 +27,7 @@
   <div class="toolbar">
     <form method="get" action="">
       <input type="text" name="q" placeholder="Rechercher un contenu ou un auteur..." value="{{ request.GET.q|default_if_none:'' }}">
-      
+
       <select name="ordering" onchange="this.form.submit()">
         <option value="-date_envoi" {% if request.GET.ordering == '-date_envoi' %}selected{% endif %}>Plus récents</option>
         <option value="date_envoi" {% if request.GET.ordering == 'date_envoi' %}selected{% endif %}>Plus anciens</option>
@@ -37,7 +37,7 @@
       {% if request.GET.q or request.GET.ordering %}
         <a href="{% url 'message_list' %}" class="muted" style="text-decoration: underline;">Réinitialiser</a>
       {% endif %}
-      
+
       <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
         <input type="checkbox" id="select-all">
         <label for="select-all" style="cursor: pointer; margin: 0; font-size:0.9rem;">Tout</label>

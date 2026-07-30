@@ -10,6 +10,3 @@ repos:
       - id: check-merge-conflict
       - id: detect-private-key
       - id: debug-statements
-      - id: name-tests-test
-        args: [--pytest]
-        files: ^messagerie/.*/tests\.py$

@@ -40,4 +40,3 @@ class Message(models.Model):
         result = ', '.join(names) if names else '—'
         logger.debug("recipient_display for Message %s: %s", self.pk, result)
         return result
-    

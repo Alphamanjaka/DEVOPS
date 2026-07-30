@@ -143,7 +143,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Accès : `http://localhost:8000`  
+Accès : `http://localhost:8000`
 Admin : `python manage.py createsuperuser`
 
 ---
@@ -158,6 +158,20 @@ docker compose run --rm web sh -c "coverage run --source='mymessages' manage.py 
 ```
 
 **34 tests — 94% coverage** (core business logic 100%).
+
+---
+
+## Qualité du code (Linting)
+
+Ce projet utilise `pre-commit` pour assurer une qualité et un formatage de code cohérents.
+
+```bash
+# 1. Installer pre-commit (une seule fois)
+pip install pre-commit
+
+# 2. Lancer les vérifications sur tous les fichiers
+pre-commit run --all-files
+```
 
 ---
 

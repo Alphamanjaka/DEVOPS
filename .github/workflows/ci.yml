@@ -87,9 +87,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Installer pre-commit
-        run: pip install pre-commit
-
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
 
