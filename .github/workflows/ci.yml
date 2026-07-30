@@ -101,9 +101,52 @@ jobs:
             pip install pre-commit --quiet && \
             pre-commit run --all-files"
 
+  security:
+    name: Scan de sécurité (Trivy)
+    needs: [tests, lint]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build de l'image
+        run: docker build -t ${{ env.IMAGE_NAME }}:ci .
+
+      - name: Scan Trivy
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:ci
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          ignore-unfixed: true
+
+      - name: Scan Trivy (SARIF) pour GitHub Security
+        uses: aquasecurity/trivy-action@0.30.0
+        if: always()
+        continue-on-error: true
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:ci
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          ignore-unfixed: true
+
+      - name: Upload SARIF to GitHub
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
   build-and-push:
     name: Build & Push Image Docker
-    needs: [tests, lint]
+    needs: [tests, lint, security]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
