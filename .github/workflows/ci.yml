@@ -116,7 +116,7 @@ jobs:
         run: docker build -t ${{ env.IMAGE_NAME }}:ci .
 
       - name: Scan Trivy
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@v0.10.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:ci
           format: table
@@ -126,7 +126,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Scan Trivy (SARIF) pour GitHub Security
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@v0.10.0
         if: always()
         continue-on-error: true
         with:
@@ -159,18 +159,12 @@ jobs:
       - name: Connexion au Registry (GHCR)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Génération des tags
-        run: |
-          IMAGE_ID=ghcr.io/${{ github.repository }}
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[:upper:]' '[:lower:]')
-          echo "TAGS=$IMAGE_ID:latest" >> $GITHUB_ENV
-          echo "TAG_VERSION=$IMAGE_ID:${{ github.sha }}" >> $GITHUB_ENV
-
       - name: Build et Push
         run: |
-          docker build -t ${{ env.TAGS }} -t ${{ env.TAG_VERSION }} .
-          docker push ${{ env.TAGS }}
-          docker push ${{ env.TAG_VERSION }}
+          IMAGE_ID="ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[:upper:]' '[:lower:]')
+          docker build -t "$IMAGE_ID:latest" -t "$IMAGE_ID:${{ github.sha }}" .
+          docker push --all-tags "$IMAGE_ID"
 
       - name: Notification webhook
         if: success()
