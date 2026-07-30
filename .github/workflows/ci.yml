@@ -80,15 +80,12 @@ jobs:
           DB_PORT=5432
           EOF
 
-      - name: Build et lint
+      - name: Build et lint avec pre-commit
         run: |
           docker compose build web
           docker compose run --rm web sh -c "\
-            python -m py_compile manage.py && \
-            python -m py_compile messagerie/settings.py && \
-            python -m py_compile mymessages/models.py && \
-            python -m py_compile mymessages/views.py && \
-            python -m py_compile mymessages/forms.py"
+            pip install pre-commit --quiet && \
+            pre-commit run --all-files"
 
   build-and-push:
     name: Build & Push Image Docker
