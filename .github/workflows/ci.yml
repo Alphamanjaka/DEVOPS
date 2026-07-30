@@ -116,7 +116,7 @@ jobs:
         run: docker build -t ${{ env.IMAGE_NAME }}:ci .
 
       - name: Scan Trivy
-        uses: aquasecurity/trivy-action@v0.10.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:ci
           format: table
@@ -126,7 +126,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Scan Trivy (SARIF) pour GitHub Security
-        uses: aquasecurity/trivy-action@v0.10.0
+        uses: aquasecurity/trivy-action@v0.36.0
         if: always()
         continue-on-error: true
         with:
