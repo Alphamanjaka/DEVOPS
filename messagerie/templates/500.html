@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Erreur Interne
+{% endblock %}
+
+{% block content %}
+  <div style="text-align: center; padding: 3rem; max-width: 500px; margin: 0 auto;">
+    <div style="font-size: 5rem; color: #dc2626; margin-bottom: 0.5rem;">500</div>
+    <h2 style="margin: 0 0 0.75rem 0;">Erreur Interne</h2>
+    <p class="muted" style="font-size: 1.05rem;">Une erreur inattendue s'est produite. L'équipe technique a été notifiée.</p>
+    <a href="{% url 'home' %}" class="btn btn-primary" style="margin-top: 1.5rem; text-decoration: none;">Retour à l'accueil</a>
+  </div>
+{% endblock %}

@@ -1,7 +1,11 @@
+import logging
+
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class Message(models.Model):
@@ -16,9 +20,11 @@ class Message(models.Model):
 
     def __str__(self):
         return self.contenu[:20]
-    
+
     def get_absolute_url(self):
-        return reverse("message_detail", kwargs={"pk": self.pk})
+        url = reverse("message_detail", kwargs={"pk": self.pk})
+        logger.debug("get_absolute_url for Message %s: %s", self.pk, url)
+        return url
 
     def all_recipients(self):
         users = set()
@@ -26,9 +32,12 @@ class Message(models.Model):
             users.add(self.recipient)
         for u in self.recipients.all():
             users.add(u)
+        logger.debug("all_recipients for Message %s: %s users", self.pk, len(users))
         return list(users)
 
     def recipient_display(self):
         names = [u.username for u in self.all_recipients()]
-        return ', '.join(names) if names else '—'
+        result = ', '.join(names) if names else '—'
+        logger.debug("recipient_display for Message %s: %s", self.pk, result)
+        return result
     

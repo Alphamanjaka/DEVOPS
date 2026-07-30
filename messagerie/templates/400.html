@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Requête Invalide
+{% endblock %}
+
+{% block content %}
+  <div style="text-align: center; padding: 3rem; max-width: 500px; margin: 0 auto;">
+    <div style="font-size: 5rem; color: #f59e0b; margin-bottom: 0.5rem;">400</div>
+    <h2 style="margin: 0 0 0.75rem 0;">Requête Invalide</h2>
+    <p class="muted" style="font-size: 1.05rem;">Désolé, la requête envoyée est invalide. Veuillez réessayer.</p>
+    <a href="{% url 'home' %}" class="btn btn-primary" style="margin-top: 1.5rem; text-decoration: none;">Retour à l'accueil</a>
+  </div>
+{% endblock %}

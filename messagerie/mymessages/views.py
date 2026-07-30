@@ -1,5 +1,6 @@
 import json
 import io
+import logging
 from collections.abc import Sequence
 from typing import Any
 from django.db.models.query import QuerySet
@@ -22,14 +23,20 @@ from .forms import MessageForm
 from .models import Message
 from .services import MessageImportService, get_message_stats
 
+logger = logging.getLogger(__name__)
+
 
 def register(request):
+    logger.info("register called method=%s", request.method)
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            logger.info("register: new user created %s", user.username)
             messages.success(request, f'Compte créé avec succès. Bienvenue {user.username}!')
             return redirect('login')
+        else:
+            logger.warning("register: invalid form %s", form.errors)
     else:
         form = UserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
@@ -37,7 +44,9 @@ def register(request):
 
 @login_required
 def home(request):
+    logger.info("home called by %s (superuser=%s)", request.user.username, request.user.is_superuser)
     if request.user.is_superuser == False:
+        logger.debug("home: redirecting non-superuser to message_list")
         return redirect('message_list')
     messages_liste = Message.objects.all().order_by('-date_envoi')
     stats = get_message_stats()
@@ -48,7 +57,9 @@ def home(request):
         from django.template.loader import render_to_string
         from django.http import JsonResponse
         html = render_to_string('_message_items.html', {'messages_liste': page_obj})
+        logger.debug("home: AJAX response page=%s", page_number)
         return JsonResponse({'html': html, 'has_next': page_obj.has_next(), 'page': page_obj.next_page_number() if page_obj.has_next() else None})
+    logger.debug("home: rendering page %s", page_number)
     return render(request, 'index.html', {
         'messages_liste': page_obj,
         'page_obj': page_obj,
@@ -70,17 +81,22 @@ def add_message(request):
     if recipient_id:
         recipient = User.objects.filter(pk=recipient_id).first()
     if contenu:
-        Message.objects.create(
+        msg = Message.objects.create(
             contenu=contenu, owner=request.user, recipient=recipient)
+        logger.info("add_message: message %s created by %s", msg.pk, request.user.username)
+    else:
+        logger.warning("add_message: empty content by %s", request.user.username)
     return redirect('home')
 
 
 @login_required
 def import_messages(request):
+    logger.info("import_messages called by %s method=%s", request.user.username, request.method)
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
         service = MessageImportService()
         success_count, error_count = service.import_csv(csv_file)
+        logger.info("import_messages: %d success, %d errors", success_count, error_count)
         if success_count > 0:
             messages.success(request, f"{success_count} messages importés avec succès.")
         if error_count > 0:
@@ -93,9 +109,11 @@ def import_messages(request):
 @require_POST
 def bulk_delete_messages(request):
     message_ids = request.POST.getlist('message_ids')
+    logger.info("bulk_delete_messages by %s: %d ids", request.user.username, len(message_ids))
     if message_ids:
         deleted_count, _ = Message.objects.filter(
             id__in=message_ids, owner=request.user).delete()
+        logger.info("bulk_delete_messages: deleted %d messages", deleted_count)
         if deleted_count > 0:
             messages.success(request, f"{deleted_count} messages supprimés.")
     return redirect('message_list')
@@ -103,6 +121,7 @@ def bulk_delete_messages(request):
 
 @login_required
 def export_messages_pdf(request):
+    logger.info("export_messages_pdf called by %s", request.user.username)
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
@@ -110,6 +129,7 @@ def export_messages_pdf(request):
     p.drawString(50, height - 50, f"Messages de {request.user.username}")
     p.setFont("Helvetica", 12)
     y = height - 80
+    msg_count = 0
     for msg in Message.objects.filter(owner=request.user).order_by('-date_envoi'):
         if y < 50:
             p.showPage()
@@ -119,14 +139,17 @@ def export_messages_pdf(request):
         text = f"[{date_str}] {msg.contenu}"
         p.drawString(50, y, text[:90] + ('...' if len(text) > 90 else ''))
         y -= 20
+        msg_count += 1
     p.showPage()
     p.save()
     buffer.seek(0)
+    logger.info("export_messages_pdf: %d messages exported", msg_count)
     return FileResponse(buffer, as_attachment=True, filename='mes_messages.pdf')
 
 
 @login_required
 def export_stats_pdf(request):
+    logger.info("export_stats_pdf called by %s", request.user.username)
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
@@ -157,6 +180,7 @@ def export_stats_pdf(request):
     p.showPage()
     p.save()
     buffer.seek(0)
+    logger.info("export_stats_pdf done")
     return FileResponse(buffer, as_attachment=True, filename='statistiques_dashboard.pdf')
 
 
@@ -175,6 +199,7 @@ class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
             parent = get_object_or_404(Message, pk=parent_pk)
             initial['parent'] = parent.pk
             initial['recipient'] = parent.owner
+            logger.debug("MessageCreateView get_initial: reply to message %s", parent_pk)
         return initial
 
     def get_context_data(self, **kwargs):
@@ -187,7 +212,9 @@ class MessageCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        logger.info("MessageCreateView: message %s created by %s", form.instance.pk, self.request.user.username)
+        return response
 
 
 class MessageListView(LoginRequiredMixin, ListView):
@@ -205,14 +232,18 @@ class MessageListView(LoginRequiredMixin, ListView):
                 Q(contenu__icontains=search_query)
                 | Q(owner__username__icontains=search_query)
             ).distinct()
-        return queryset.filter(
+        qs = queryset.filter(
             Q(owner=self.request.user) | Q(recipient=self.request.user) | Q(recipients=self.request.user)
         ).distinct()
+        logger.debug("MessageListView get_queryset for %s: %d messages (search=%s)", self.request.user.username, qs.count(), search_query)
+        return qs
 
     def get_ordering(self):
         ordering = self.request.GET.get('ordering', '-date_envoi')
         allowed = ['date_envoi', '-date_envoi', 'owner__username', '-owner__username']
-        return ordering if ordering in allowed else '-date_envoi'
+        result = ordering if ordering in allowed else '-date_envoi'
+        logger.debug("MessageListView get_ordering: %s", result)
+        return result
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):
@@ -227,11 +258,13 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
         if is_recipient and not obj.is_read:
             obj.is_read = True
             obj.save(update_fields=['is_read'])
+            logger.info("MessageDetailView: message %s marked as read by %s", obj.pk, user.username)
         return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['replies'] = self.object.replies.all().select_related('owner', 'recipient').order_by('date_envoi')
+        logger.debug("MessageDetailView: %d replies for message %s", len(context['replies']), self.object.pk)
         return context
 
 
@@ -244,7 +277,9 @@ class MessageDeleteView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesT
 
     def test_func(self):
         obj = self.get_object()
-        return getattr(obj, 'owner', None) == self.request.user or self.request.user.is_superuser
+        allowed = getattr(obj, 'owner', None) == self.request.user or self.request.user.is_superuser
+        logger.info("MessageDeleteView test_func for %s on message %s: %s", self.request.user.username, obj.pk, allowed)
+        return allowed
 
 
 class MessageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -257,4 +292,6 @@ class MessageUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesT
 
     def test_func(self):
         obj = self.get_object()
-        return getattr(obj, 'owner', None) == self.request.user or self.request.user.is_superuser
+        allowed = getattr(obj, 'owner', None) == self.request.user or self.request.user.is_superuser
+        logger.info("MessageUpdateView test_func for %s on message %s: %s", self.request.user.username, obj.pk, allowed)
+        return allowed

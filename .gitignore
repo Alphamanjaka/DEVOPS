@@ -1,3 +1,8 @@
 .env
 # ignore pycache files
 __pycache__/
+/messagerie/messagerie/__pycache__
+/messagerie/messagerie/__pycache__
+/messagerie/mymessages/__pycache__
+*.pyc
+messagerie/mymessages/__pycache__/admin.cpython-313.pyc

@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from datetime import datetime
@@ -10,6 +11,7 @@ from django.shortcuts import render, redirect
 from appconf.health import db_health_check
 from .models import Message
 
+logger = logging.getLogger(__name__)
 
 SERVICE_ICONS = {
     'Base de données': 'fa-solid fa-database',
@@ -23,20 +25,25 @@ def _get_uptime():
         stat = os.stat('/proc/1/cmdline')
         uptime_seconds = (datetime.now() - datetime.fromtimestamp(stat.st_mtime)).total_seconds()
         hours = round(uptime_seconds / 3600, 1)
-        return f"Démarré il y a {hours}h"
-    except (FileNotFoundError, OSError):
+        result = f"Démarré il y a {hours}h"
+        logger.debug("_get_uptime: %s", result)
+        return result
+    except (FileNotFoundError, OSError) as e:
+        logger.warning("_get_uptime failed: %s", e)
         return "N/A"
 
 
 def _get_services():
+    logger.debug("_get_services called")
     disk = shutil.disk_usage("/")
     disk_usage_pct = round(disk.used / disk.total * 100, 1)
+    db_healthy = db_health_check()
 
     services = [
         {
             'name': 'Base de données',
-            'status': 'healthy' if db_health_check() else 'critical',
-            'info': 'Connecté' if db_health_check() else 'Échec de connexion',
+            'status': 'healthy' if db_healthy else 'critical',
+            'info': 'Connecté' if db_healthy else 'Échec de connexion',
         },
         {
             'name': 'Disque',
@@ -51,11 +58,12 @@ def _get_services():
     ]
     for s in services:
         s['icon'] = SERVICE_ICONS.get(s['name'], 'fa-solid fa-circle')
+    logger.info("_get_services: %d services checked", len(services))
     return services
 
 
 def _get_pipelines():
-    return [
+    pipelines = [
         {'name': 'Messagerie CI', 'status': 'success',
             'last_run': '2026-07-28 14:32', 'commit': '4f1a3b7', 'coverage': 87,
             'branch': 'main', 'author': 'CI', 'duration': '2m 14s', 'time': datetime(2026, 7, 28, 14, 32)},
@@ -72,19 +80,23 @@ def _get_pipelines():
             'last_run': '2026-07-29 06:45', 'commit': '4f1a3b7', 'coverage': None,
             'branch': 'main', 'author': 'CI', 'duration': '3m 02s', 'time': datetime(2026, 7, 29, 6, 45)},
     ]
+    logger.debug("_get_pipelines: %d pipelines", len(pipelines))
+    return pipelines
 
 
 def _get_pipeline_stats():
     pipelines = _get_pipelines()
-    return {
+    stats = {
         'success': sum(1 for p in pipelines if p['status'] == 'success'),
         'fail': sum(1 for p in pipelines if p['status'] == 'failed'),
         'running': sum(1 for p in pipelines if p['status'] == 'running'),
     }
+    logger.debug("_get_pipeline_stats: %s", stats)
+    return stats
 
 
 def _get_deployments():
-    return [
+    deployments = [
         {'version': 'v2.4.1', 'environment': 'Production',
             'date': datetime(2026, 7, 28, 10, 0), 'status': 'success', 'trigger': 'CI'},
         {'version': 'v2.4.0', 'environment': 'Staging',
@@ -92,10 +104,13 @@ def _get_deployments():
         {'version': 'v2.3.9', 'environment': 'Production',
             'date': datetime(2026, 7, 25, 8, 15), 'status': 'rollback', 'trigger': 'CI'},
     ]
+    logger.debug("_get_deployments: %d deployments", len(deployments))
+    return deployments
 
 
 @login_required
 def devops_dashboard(request):
+    logger.info("devops_dashboard called by %s", request.user.username)
     pipelines = _get_pipelines()
     deployments = _get_deployments()
     return render(request, 'devops/dashboard.html', {
@@ -111,11 +126,13 @@ def devops_dashboard(request):
 
 @login_required
 def devops_deploy(request):
+    logger.info("devops_deploy called by %s method=%s", request.user.username, request.method)
     if request.method == 'POST':
         environment = request.POST.get('environment', 'Staging')
         branch = request.POST.get('branch', 'main')
         version = request.POST.get('version', 'v1.0.0')
         notes = request.POST.get('notes', '')
+        logger.info("devops_deploy: %s -> %s by %s", version, environment, request.user.username)
         body = (
             f"[Déploiement] {version} sur {environment}\n"
             f"Nouveau déploiement déclenché par {request.user.username}\n"
@@ -129,6 +146,7 @@ def devops_deploy(request):
             Message(contenu=body, owner=request.user, recipient=user)
             for user in active_users
         ])
+        logger.info("devops_deploy: notified %d users", active_users.count())
         messages.success(request, f"Déploiement {version} vers {environment} lancé. Notification envoyée à {active_users.count()} utilisateurs.")
         return redirect('devops_dashboard')
     return render(request, 'devops/deploy.html')
@@ -138,11 +156,13 @@ def devops_deploy(request):
 def devops_notify_pipeline(request):
     pipeline_name = request.GET.get('pipeline', 'Pipeline')
     status = request.GET.get('status', 'unknown')
+    logger.info("devops_notify_pipeline: %s status=%s by %s", pipeline_name, status, request.user.username)
     body = f"[Pipeline] {pipeline_name} - {status}\nPipeline {pipeline_name} terminé avec statut: {status}"
     active_users = User.objects.filter(is_active=True)
     Message.objects.bulk_create([
         Message(contenu=body, owner=request.user, recipient=user)
         for user in active_users
     ])
+    logger.info("devops_notify_pipeline: notified %d users", active_users.count())
     messages.success(request, f"Notification envoyée à {active_users.count()} utilisateurs pour {pipeline_name}.")
     return redirect('devops_dashboard')

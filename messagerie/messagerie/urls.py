@@ -16,12 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .views import health_check
+from .views import health_check, LoginViewWithLogging, logout_view
+from .views import error_400, error_403, error_404, error_500
 from mymessages import views
 from mymessages.views import register
 from rest_framework.routers import DefaultRouter
 from mymessages.api import MessageViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+handler400 = error_400
+handler403 = error_403
+handler404 = error_404
+handler500 = error_500
 
 router = DefaultRouter()
 router.register(r'messages', MessageViewSet, basename='api_message')
@@ -33,8 +39,10 @@ urlpatterns = [
     path('export-pdf/', views.export_messages_pdf, name='export_messages_pdf'),
     path('import/', views.import_messages, name='import_messages'),
     path('health/', health_check),
-    path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/login/', LoginViewWithLogging.as_view(), name='login'),
+    path('accounts/logout/', logout_view, name='logout'),
     path('accounts/register/', register, name='register'),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('messages/', include('mymessages.urls')),
     path('api/', include(router.urls)),
     path('api/webhook/', include('mymessages.webhook_urls')),

@@ -2,6 +2,7 @@
 Seed script: reset database and load important demo data.
 Run: docker exec -it devops-web-1 python seed_data.py
 """
+import logging
 import os
 import sys
 import django
@@ -15,18 +16,24 @@ from django.utils import timezone
 from datetime import timedelta
 from mymessages.models import Message
 
+logger = logging.getLogger(__name__)
+
 
 def clean():
+    logger.info("Cleaning existing data")
     Message.objects.all().delete()
     User.objects.exclude(is_superuser=True).delete()
-    print("  Cleaned existing data")
+    logger.info("Cleaned existing data")
 
 
 def create_users():
-    root, _ = User.objects.get_or_create(username='root', defaults={'is_superuser': True})
+    logger.info("Creating users")
+    root, created = User.objects.get_or_create(username='root', defaults={'is_superuser': True})
     root.set_password('root123')
     root.is_staff = True
     root.save()
+    if created:
+        logger.info("Created root user")
 
     users_data = [
         ('john_user', 'john@example.com', False),
@@ -36,13 +43,14 @@ def create_users():
     ]
     users = {'root': root}
     for username, email, is_staff in users_data:
-        u, _ = User.objects.get_or_create(username=username)
+        u, created = User.objects.get_or_create(username=username)
         u.set_password('pass1234')
         u.email = email
         u.is_staff = is_staff
         u.save()
         users[username] = u
-    print(f"  Created {len(users)} users")
+        logger.debug("User %s created=%s", username, created)
+    logger.info("Created %d users", len(users))
     return users
 
 
@@ -83,6 +91,7 @@ def create_messages(users):
             is_read=True,
         )
         messages.append(msg)
+    logger.debug("Created %d simple messages", len(content_data))
 
     # Messages with MULTIPLE recipients
     multi_msgs = [
@@ -103,11 +112,15 @@ def create_messages(users):
         )
         msg.recipients.set([users[k] for k in recipient_keys])
         msg.save()
+    logger.debug("Created %d multi-recipient messages", len(multi_msgs))
 
     # Mark a few messages as unread
+    unread_count = 0
     for m in Message.objects.filter(recipient__isnull=False).order_by('-date_envoi')[:3]:
         m.is_read = False
         m.save()
+        unread_count += 1
+    logger.debug("Marked %d messages as unread", unread_count)
 
     # Create threaded replies
     parent = Message.objects.order_by('date_envoi').first()
@@ -128,19 +141,20 @@ def create_messages(users):
             parent=reply,
             is_read=False,
         )
+        logger.debug("Created threaded replies")
 
     total = Message.objects.count()
     unread = Message.objects.filter(is_read=False).count()
     multi = Message.objects.exclude(recipients=None).count()
-    print(f"  Created {total} messages ({unread} unread, {multi} multi-recipients)")
+    logger.info("Created %d messages (%d unread, %d multi-recipients)", total, unread, multi)
 
 
 def run():
-    print("=== Seed Data ===")
+    logger.info("=== Seed Data started ===")
     clean()
     users = create_users()
     create_messages(users)
-    print("=== Done ===")
+    logger.info("=== Seed Data done ===")
 
 
 if __name__ == '__main__':
