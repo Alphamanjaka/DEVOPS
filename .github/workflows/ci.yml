@@ -82,24 +82,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Création du fichier .env
-        run: |
-          cat > .env << EOF
-          POSTGRES_DB=test_db
-          POSTGRES_USER=test_user
-          POSTGRES_PASSWORD=test_password
-          SECRET_KEY=ci-secret-key-pour-les-tests
-          DEBUG=1
-          DB_HOST=db
-          DB_PORT=5432
-          EOF
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Build et lint avec pre-commit
-        run: |
-          docker compose build web
-          docker compose run --rm web sh -c "\
-            pip install pre-commit --quiet && \
-            pre-commit run --all-files"
+      - name: Installer pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
 
   security:
     name: Scan de sécurité (Trivy)
