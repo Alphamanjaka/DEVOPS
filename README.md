@@ -2,8 +2,9 @@
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
+![Security](https://img.shields.io/badge/security-Trivy-blue)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
-![Django](https://img.shields.io/badge/django-6.0-green)
+![Django](https://img.shields.io/badge/django-6.0.4-green)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-15-316192)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 
@@ -11,140 +12,132 @@ Application de messagerie avec pipeline CI/CD complet — démonstration techniq
 
 ---
 
-## Architecture
-
-```mermaid
-graph TD
-    subgraph "Frontend"
-        A[HTML5 + CSS3] --> B[Django Templates]
-        C[Chart.js] --> B
-        D[FontAwesome] --> B
-    end
-
-    subgraph "Backend Django"
-        B --> E[Views]
-        E --> F[Models]
-        E --> G[REST API DRF]
-        F --> H[(PostgreSQL)]
-        G --> I[Swagger Docs]
-    end
-
-    subgraph "DevOps"
-        J[GitHub Actions] --> K[Docker Compose]
-        K --> L[Tests Unitaires]
-        L --> M[Coverage ≥80%]
-        M --> N[GHCR Registry]
-    end
-
-    subgraph "Fonctionnalités"
-        O[Inscription] --> E
-        P[Dark Mode] --> B
-        Q[Reply/Thread] --> F
-        R[Read/Unread] --> F
-        S[Pagination AJAX] --> E
-        T[Email Notification] --> F
-    end
-```
-
----
-
 ## Stack Technique
 
 | Couche | Technologie |
 |---|---|
-| **Backend** | Django 6.0, DRF 3.16, Gunicorn |
-| **Base de données** | PostgreSQL 15 |
+| **Backend** | Django 6.0.4, DRF 3.16, Gunicorn |
+| **Base de données** | PostgreSQL 15 (Render Managed) |
 | **Frontend** | HTML5, CSS3 (variables CSS), Chart.js, FontAwesome |
 | **API** | REST (JSON) + Swagger/OpenAPI |
-| **Conteneurisation** | Docker, Docker Compose |
+| **Conteneurisation** | Docker multi-stage, Docker Compose |
 | **CI/CD** | GitHub Actions → GHCR |
-| **Tests** | unittest, coverage.py (seuil ≥80%) |
-
----
-
-## Fonctionnalités
-
-### Core
-- **CRUD** messages avec permissions granulaire (`add_message`, `change_message`, `delete_message`)
-- **Inscription** utilisateur via formulaire dédié
-- **Read/Unread** — marquage automatique à la lecture + badge notification
-- **Reply/Thread** — système de réponse avec parent/child
-- **Recherche** full-text dans la liste des messages
-- **Dashboard** admin avec graphiques Chart.js (activité par jour, répartition par utilisateur)
-- **Pagination AJAX** bouton "Voir plus" sans rechargement
-
-### Import/Export
-- **Import CSV** — upload en masse avec validation des utilisateurs
-- **Export PDF** — messages personnels + rapport statistique
-
-### API REST
-- Endpoint `/api/messages/` avec authentication session/Basic
-- Pagination, filtrage, throttling (100/h user, 20/h anon)
-- Documentation Swagger sur `/api/docs/`
-
-### UX
-- **Dark mode** persisté dans localStorage avec toggle
-- **Design responsive** sidebar adaptative
-- **Notifications email** via signal `post_save`
+| **Tests** | unittest, coverage.py (seuil ≥70%) |
+| **Qualité** | pre-commit hooks |
+| **Sécurité** | Trivy scanner (HIGH/CRITICAL) |
+| **Dépendances** | Dependabot (pip, docker, actions) |
+| **Logs** | Logging Python structuré (console) |
 
 ---
 
 ## Pipeline CI/CD
 
-### Workflow (`.github/workflows/ci.yml`)
+### Workflow complet (`.github/workflows/ci.yml`)
 
 ```mermaid
 flowchart LR
-    Push([Push sur main]) --> CI
+    Push([Push sur main/develop]) --> CI
 
-    subgraph CI [Job: Intégration Continue]
-        Checkout[Checkout] --> Env[Création .env test]
-        Env --> Test[Tests unitaires<br> Docker Compose]
-        Test --> Cov[Coverage ≥80%]
+    subgraph CI [Intégration Continue]
+        direction TB
+        T[Tests unitaires + Coverage] --> L[Lint pre-commit] --> S[Scan sécurité Trivy]
     end
 
     CI -- Succès --> CD
     CI -- Échec --> Fail([Arrêt])
 
-    subgraph CD [Job: Livraison Continue]
-        Login[Login GHCR] --> Build[Build Image]
-        Build --> Push[Push vers Registry]
+    subgraph CD [Livraison Continue]
+        Build[Build Docker] --> Push[Push vers GHCR]
     end
 
-    CD --> Success([Image prête sur GHCR])
+    CD --> Webhook([Notification /api/webhook/github/])
 ```
 
-- **CI** : `docker compose run --build --rm web python manage.py test` + `coverage run --fail-under=80`
-- **CD** : Build & push vers `ghcr.io/<repo>` (nécessite `integration-continue`)
+### Jobs détaillés
+
+| Job | Déclencheur | Description |
+|---|---|---|
+| `tests` | push, PR | Tests Django + coverage ≥70% + seed data + health check |
+| `lint` | push, PR | pre-commit (trailing-whitespace, YAML, JSON, secrets, debug) |
+| `security` | push, PR | Trivy scan image Docker (HIGH/CRITICAL → échec) |
+| `build-and-push` | push main uniquement | Build + push vers `ghcr.io` |
+
+Le CD ne démarre qu'après le succès des 3 jobs CI.
+
+---
+
+## Qualité du code
+
+### Pre-commit hooks
+
+```bash
+pip install pre-commit
+pre-commit install     # installe les hooks git
+pre-commit run --all-files   # vérification manuelle
+```
+
+Hooks activés : trailing-whitespace, end-of-file-fixer, check-yaml, check-json, check-added-large-files, check-merge-conflict, detect-private-key, debug-statements.
+
+### Dependabot
+
+`.github/dependabot.yml` — mises à jour automatiques chaque lundi pour :
+- pip (dépendances Python, max 5 PRs)
+- Docker (image de base, max 3 PRs)
+- GitHub Actions (max 3 PRs)
 
 ---
 
 ## Sécurité
 
-| Setting | Défaut | Prod (via env) |
-|---|---|---|
-| `SECURE_HSTS_SECONDS` | 0 | 31536000 |
-| `SECURE_SSL_REDIRECT` | False | True |
-| `SESSION_COOKIE_SECURE` | False | True |
-| `CSRF_COOKIE_SECURE` | False | True |
+### Trivy (image Docker)
+
+Scanné à chaque push/PR via `aquasecurity/trivy-action` :
+- Vulnérabilités OS + librairies Python
+- Seuil bloquant : HIGH et CRITICAL
+- Rapport SARIF uploadé dans GitHub Security tab
+
+### Configuration Django (production)
+
+| Setting | Valeur |
+|---|---|
+| `SECURE_HSTS_SECONDS` | 31536000 |
+| `SECURE_SSL_REDIRECT` | True |
+| `SESSION_COOKIE_SECURE` | True |
+| `CSRF_COOKIE_SECURE` | True |
+
+### Gestion d'erreurs
+
+- Handler 400/403/404/500 avec logs détaillés (path, user, method)
+- Templates d'erreur personnalisés (400.html, 403.html, 404.html, 500.html)
+- Login/Logout avec logging (tentatives échouées, succès)
+
+---
+
+## Health Check
+
+```json
+GET /health/
+{
+  "status": "ok",
+  "version": "a1b2c3d",
+  "db": { "status": "ok" }
+}
+```
+
+- Retourne 200 si DB OK, 503 en mode dégradé
+- Logs détaillés à chaque appel
+- `version` = commit Render (ou "dev" en local)
 
 ---
 
 ## Démarrer en local
 
 ```bash
-# 1. Cloner
-git clone <repo-url> && cd <repo>
-
-# 2. Config
 cp .env.example .env
-
-# 3. Lancer
 docker compose up --build
 ```
 
 Accès : `http://localhost:8000`
-Admin : `python manage.py createsuperuser`
 
 ---
 
@@ -154,28 +147,19 @@ Admin : `python manage.py createsuperuser`
 docker compose run --rm web python manage.py test
 
 # Avec couverture
-docker compose run --rm web sh -c "coverage run --source='mymessages' manage.py test && coverage report"
+docker compose run --rm web sh -c "\
+  coverage run --source=mymessages manage.py test && \
+  coverage report"
+
+# Seed data
+docker compose run --rm web python seed_data.py
 ```
 
-**34 tests — 94% coverage** (core business logic 100%).
+**34 tests — 94% coverage.**
 
 ---
 
-## Qualité du code (Linting)
-
-Ce projet utilise `pre-commit` pour assurer une qualité et un formatage de code cohérents.
-
-```bash
-# 1. Installer pre-commit (une seule fois)
-pip install pre-commit
-
-# 2. Lancer les vérifications sur tous les fichiers
-pre-commit run --all-files
-```
-
----
-
-## API
+## API REST
 
 | Méthode | Endpoint | Auth | Description |
 |---|---|---|---|
@@ -186,6 +170,35 @@ pre-commit run --all-files
 | DELETE | `/api/messages/{id}/` | Oui | Supprimer |
 | GET | `/api/schema/` | Oui | OpenAPI Schema |
 | GET | `/api/docs/` | Oui | Swagger UI |
+
+### Webhook GitHub
+
+| Méthode | Endpoint | Description |
+|---|---|---|
+| POST | `/api/webhook/github/` | Réception webhooks GitHub (HMAC signé) |
+| GET | `/api/webhook/github/` | Info (health check webhook) |
+
+---
+
+## Fonctionnalités
+
+### Core
+- CRUD messages avec permissions granulaire
+- Inscription utilisateur
+- Read/Unread — marquage automatique + badge notification
+- Reply/Thread — système de réponse parent/child
+- Recherche full-text
+- Dashboard admin avec graphiques Chart.js
+- Pagination AJAX "Voir plus"
+
+### Import/Export
+- Import CSV avec validation
+- Export PDF messages personnels + rapport statistique
+
+### UX
+- Dark mode persisté (localStorage)
+- Design responsive
+- Notification email via signal post_save
 
 ---
 
@@ -199,6 +212,12 @@ pre-commit run --all-files
 - [x] Dark mode
 - [x] Email notification (signal)
 - [x] Throttling + Pagination
-- [x] Tests coverage ≥80%
+- [x] Tests coverage ≥70%
 - [x] AJAX pagination (Load more)
-- [ ] CI/CD déploiement automatique Render
+- [x] CI/CD pipeline (tests → lint → security → build → push)
+- [x] Pre-commit hooks
+- [x] Dependabot (dépendances)
+- [x] Health check enrichi
+- [x] Scan sécurité Docker (Trivy)
+- [x] Logging applicatif complet
+- [x] Gestion d'erreurs (400/403/404/500)
