@@ -1,6 +1,7 @@
 import logging
+import os
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import connection
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
@@ -11,13 +12,23 @@ logger = logging.getLogger(__name__)
 
 def health_check(request):
     logger.info("health_check called")
+    result = {
+        "status": "ok",
+        "version": os.environ.get("RENDER_GIT_COMMIT", "unknown")[:7] if os.environ.get("RENDER_GIT_COMMIT") else "dev",
+    }
+    db_ok = False
     try:
-        connection.cursor()
-        logger.info("health_check OK")
-        return HttpResponse("OK", status=200)
+        connection.ensure_connection()
+        db_ok = True
     except Exception as e:
-        logger.error("health_check failed: %s", e)
-        return HttpResponse("Service Unavailable", status=503)
+        logger.error("health_check DB failed: %s", e)
+        result["status"] = "degraded"
+        result["db"] = {"status": "error", "detail": str(e)}
+    if db_ok:
+        result["db"] = {"status": "ok"}
+        result["status"] = "ok"
+    logger.info("health_check result: %s", result["status"])
+    return JsonResponse(result, status=200 if result["status"] == "ok" else 503)
 
 
 class LoginViewWithLogging(LoginView):
