@@ -1,10 +1,13 @@
-name: CI – Tests & Lint
+name: CI/CD
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+
+env:
+  IMAGE_NAME: messagerie-devops
 
 jobs:
   tests:
@@ -86,3 +89,46 @@ jobs:
             python -m py_compile mymessages/models.py && \
             python -m py_compile mymessages/views.py && \
             python -m py_compile mymessages/forms.py"
+
+  build-and-push:
+    name: Build & Push Image Docker
+    needs: [tests, lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connexion au Registry (GHCR)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Génération des tags
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository }}
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[:upper:]' '[:lower:]')
+          echo "TAGS=$IMAGE_ID:latest" >> $GITHUB_ENV
+          echo "TAG_VERSION=$IMAGE_ID:${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Build et Push
+        run: |
+          docker build -t ${{ env.TAGS }} -t ${{ env.TAG_VERSION }} .
+          docker push ${{ env.TAGS }}
+          docker push ${{ env.TAG_VERSION }}
+
+      - name: Notification webhook
+        if: success()
+        run: |
+          curl -s -X POST http://localhost:8000/api/webhook/github/ \
+            -H "Content-Type: application/json" \
+            -d '{
+              "ref": "refs/heads/${{ github.ref_name }}",
+              "commits": [{
+                "id": "${{ github.sha }}",
+                "message": "CD OK – Image poussée sur GHCR"
+              }],
+              "sender": {"login": "${{ github.actor }}"},
+              "repository": {"full_name": "${{ github.repository }}"}
+            }' || echo "Webhook notification skipped (not running locally)"
