@@ -1,29 +1,27 @@
 import logging
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.models import User
+from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .models import Message
 
 logger = logging.getLogger(__name__)
 
 
-def _notify_websocket(instance):
-    recipients = instance.all_recipients()
-    if not recipients:
-        logger.debug("notify_websocket: no recipients for message pk=%s", instance.pk)
-        return
+def _send_websocket(instance, users):
     try:
         channel_layer = get_channel_layer()
         if channel_layer is None:
             logger.warning("notify_websocket: no channel layer configured for message pk=%s", instance.pk)
             return
-        for user in recipients:
+        for user in users:
             if user == instance.owner:
                 continue
-            channel_layer.group_send(
+            async_to_sync(channel_layer.group_send)(
                 f'notify_{user.username}',
                 {
                     'type': 'new_message',
@@ -55,4 +53,14 @@ def notify_recipient(sender, instance, created, **kwargs):
         logger.info("notify_recipient: email sent to %s", instance.recipient.email)
     else:
         logger.debug("notify_recipient: no email for message pk=%s (no recipient or no email)", instance.pk)
-    _notify_websocket(instance)
+    if instance.recipient:
+        _send_websocket(instance, [instance.recipient])
+
+
+@receiver(m2m_changed, sender=Message.recipients.through)
+def notify_recipients_m2m(sender, instance, action, pk_set, **kwargs):
+    if action != 'post_add' or not pk_set:
+        return
+    users = User.objects.filter(pk__in=pk_set)
+    logger.info("notify_recipients_m2m: %d recipient(s) added for message pk=%s", users.count(), instance.pk)
+    _send_websocket(instance, list(users))
