@@ -1,185 +1,184 @@
 # Présentation 8 min — GitHub Actions comme outil DevOps
 
 **Format :** Slides uniquement (sans démo live) — screenshots intégrés dans les slides.
-**Sujet :** **GitHub Actions** en tant qu'outil DevOps — son fonctionnement, ses concepts, ses forces et ses limites.
-**Cas d'usage :** le projet *Messagerie* (Django) traverse le pipeline comme démonstration concrète.
+**Sujet :** **GitHub Actions** en tant qu'outil DevOps, en 3 parties.
+**Cas d'usage :** le projet *Messagerie* (Django) pour la partie mise en place.
 **Déployé :** https://devops-omjy.onrender.com
-
-Fil conducteur : **« Un seul fichier YAML dans le dépôt transforme chaque commit en livraison testée, sécurisée et automatisée. »**
 
 ---
 
 ## Plan d'ensemble (8 min)
 
-| # | Slide | Timing | Durée | Message clé |
-|---|---|---|---|---|
-| 1 | Le besoin & le choix de l'outil | 0:00 – 0:40 | 40s | Pourquoi un outil CI/CD, pourquoi GitHub Actions |
-| 2 | GitHub Actions : les concepts | 0:40 – 2:00 | 1min20 | Workflow YAML, triggers, jobs, steps, actions |
-| 3 | Notre pipeline en pratique | 2:00 – 3:30 | 1min30 | Le `ci.yml` réel appliqué au projet |
-| 4 | Une exécution en images | 3:30 – 4:30 | 1min | Jobs verts, logs, artifacts, rapports |
-| 5 | Sécurité & qualité intégrées | 4:30 – 5:30 | 1min | Trivy, PR checks, secrets, Dependabot |
-| 6 | Forces & limites de l'outil | 5:30 – 6:30 | 1min | Ce qu'il apporte vs ses limites |
-| 7 | Retour d'expérience | 6:30 – 7:30 | 1min | 3 bugs réels détectés par la CI |
-| 8 | Conclusion + questions | 7:30 – 8:00 | 30s | Bilan et perspectives |
+| # | Slide | Timing | Durée |
+|---|---|---|---|
+| 1.1 | Qu'est-ce que GitHub Actions + 4 points essentiels + pourquoi | 0:00 – 1:20 | 1min20 |
+| 1.2 | Principe de fonctionnement & architecture | 1:20 – 2:30 | 1min10 |
+| 1.3 | Composants principaux | 2:30 – 3:30 | 1min00 |
+| 2.1 | Mise en place — Objectif & pré-requis | 3:30 – 4:30 | 1min00 |
+| 2.2 | Mise en place — Étapes | 4:30 – 6:00 | 1min30 |
+| 3.1 | Les forces de GitHub Actions (4 points) | 6:00 – 7:00 | 1min00 |
+| 3.2 | Les limites (3 points) + conclusion | 7:00 – 8:00 | 1min00 |
 
 ---
 
-## Slide 1 — Le besoin & le choix de l'outil (0:00 → 0:40)
+# PARTIE 1 — PRÉSENTATION DE GITHUB ACTIONS
+
+## Slide 1.1 — Qu'est-ce que GitHub Actions ? (0:00 → 1:20)
 
 **Contenu de la slide :**
-- Titre : « GitHub Actions — la CI/CD au cœur du dépôt »
-- Le besoin : *intégrer, tester, sécuriser et livrer le code automatiquement à chaque commit*
-- Pourquoi GitHub Actions :
-  - Déjà intégré au dépôt (zéro serveur à installer, zéro config Jenkins à maintenir)
-  - Pas d'infrastructure à héberger (runners hébergés par GitHub)
-  - Configuration par code (workflow-as-code en YAML)
-- Screenshot de l'onglet Actions du repo
-
-**Texte à dire (≈40s) :**
-> « Pour automatiser la livraison du projet, il fallait un outil de CI/CD. J'ai retenu **GitHub Actions**.
-> Son avantage décisif : tout est déclaré dans le dépôt, sous forme de code. Aucun serveur à installer — les jobs s'exécutent sur des machines hébergées par GitHub — et le résultat s'affiche directement dans l'onglet Actions du dépôt.
-> La promesse : à chaque commit, le code est automatiquement testé, contrôlé, sécurisé, puis livré. Je vais d'abord expliquer les concepts de l'outil, puis montrer comment il est utilisé sur le projet. »
-
-**Transition :** « Voyons les briques de GitHub Actions. »
-
----
-
-## Slide 2 — GitHub Actions : les concepts (0:40 → 2:00)
-
-**Contenu de la slide :** schéma conceptuel
-```
-Workflow (.github/workflows/ci.yml)
- ├─ on:          → déclencheurs (push, pull_request)
- ├─ jobs:        → exécutés sur des runners (ubuntu-latest)
- │   ├─ steps    → actions réutilisables (Marketplace) ou commandes
- │   ├─ needs    → dépendances entre jobs
- │   └─ if       → conditions
- └─ secrets / artifacts / env
-```
-- 5 mots-clés à retenir : **workflow, déclencheur, job, step, action**
-- Screenshot d'un extrait YAML annoté
+- Définition : *un service d'intégration et de déploiement continus (CI/CD) intégré à GitHub, qui exécute automatiquement des tâches définies dans le dépôt, à chaque événement Git.*
+- **4 points essentiels** (ce que c'est) :
+  1. **CI/CD intégré à GitHub** — pas d'outil externe, pas de serveur à installer
+  2. **Configuré par du code** — des fichiers YAML dans `.github/workflows/`
+  3. **Exécution sur des runners** — machines gérées par GitHub (ou auto-hébergées)
+  4. **Un écosystème d'actions** réutilisables depuis un Marketplace
+- **Pourquoi GitHub Actions** :
+  - Déjà présent dans le dépôt : zéro infrastructure à administrer
+  - Workflow-as-code : la config est versionnée, revue et historisée avec le code
+  - Gratuit pour les dépôts publics, résultats visibles dans l'onglet Actions
+- Screenshot : onglet Actions du repo
 
 **Texte à dire (≈1min20) :**
-> « GitHub Actions repose sur des fichiers YAML placés dans `.github/workflows/`. On appelle ça un **workflow**.
-> Premier mot-clé : le **déclencheur**, la clause `on`. Le workflow peut démarrer sur un push, une pull request, un horaire — ou même manuellement. Dans notre cas : push sur main et develop, pull request vers main.
-> Le workflow contient des **jobs**, chacun exécuté sur un **runner** — une machine Linux, Windows ou macOS hébergée par GitHub. Notre pipeline utilise `ubuntu-latest`.
-> Chaque job est une liste d'étapes, les **steps** : soit des commandes directes, soit des **actions** réutilisables — comme `checkout`, qui récupère le code, ou `setup-python`. Ces actions viennent d'un **Marketplace**, un peu comme des modules.
-> Deux mécanismes de contrôle : `needs`, pour exprimer qu'un job dépend des résultats d'un autre, et `if`, pour des conditions. Enfin, l'outil gère les **secrets**, les **artifacts** — des fichiers produits et téléchargeables — et l'**environnement global** du workflow. »
+> « Première partie : présentation de l'outil.
+> **GitHub Actions, c'est quoi ?** C'est un service d'intégration et de déploiement continus, intégré directement à GitHub. Il déclenche automatiquement des tâches — tester, construire, déployer — à chaque événement du dépôt, comme un push ou une pull request.
+> Quatre points le définissent. D'abord, la CI/CD est **intégrée à GitHub** : aucun serveur Jenkins à installer ni à maintenir. Ensuite, tout est **configuré par du code** : des fichiers YAML rangés dans `.github/workflows/`. Troisièmement, l'exécution se fait sur des **runners** — des machines fournies par GitHub. Et enfin, il s'appuie sur un **écosystème d'actions** réutilisables, comparables à des modules.
+> Pourquoi le choisir ? Parce qu'il est **déjà dans le dépôt**, que la configuration est versionnée comme le code, et que le résultat s'affiche dans l'onglet Actions. »
 
-**Transition :** « Appliquons ces concepts au projet. »
+**Transition :** « Voyons maintenant comment l'outil fonctionne. »
 
 ---
 
-## Slide 3 — Notre pipeline en pratique (2:00 → 3:30)
+## Slide 1.2 — Principe de fonctionnement & architecture (1:20 → 2:30)
 
-**Contenu de la slide :** le pipeline réel annoté (avec le YAML derrière)
+**Contenu de la slide :** schéma d'architecture
 ```
-push/PR ─▶ ① tests ─┐
-                    ├─▶ ③ security (Trivy) ─▶ ④ build-and-push (main uniquement)
-          ② lint  ──┘                                   └─▶ webhook notification
+Événement Git ──▶ GitHub (plateforme) ──▶ Runners (VM ubuntu-latest)
+  push / PR        - détecte le workflow   - exécutent les jobs
+                   - lit le YAML           - chaque job = steps
+                   - orchestre les runners
+                                                ▼
+                    Statut + logs + artifacts (visibles dans l'onglet Actions)
 ```
-- Détails du job `tests` : .env de test → compose → migrations → coverage ≥70% → seed data → health check → artifact
-- Détail du job `security` : `needs: [tests, lint]`, scan HIGH/CRITICAL, exit-code 1
-- Détail du job `build-and-push` : `needs: [tests, lint, security]` + `if: main && push`, login GHCR avec `GITHUB_TOKEN`, tags `latest` + `sha`, webhook
-- L'effet bloquant : un job rouge empêche le suivant
+- Principe : *un événement Git déclenche un workflow ; le workflow s'exécute en jobs sur des runners ; chaque job enchaîne des steps ; tout est tracé dans GitHub.*
+- Exemple réel (projet Messagerie) : push → 4 jobs (tests, lint, security, build-and-push)
+- Screenshot : run avec jobs en parallèle puis enchaînement
 
-**Texte à dire (≈1min30) :**
-> « Concrètement, le projet a un workflow unique nommé *CI/CD* avec quatre jobs.
-> Le premier, **tests**, reproduit l'environnement complet : il construit l'image Docker, démarre PostgreSQL, applique les migrations, exécute les tests avec la couverture — bloquante dès quatre-vingt-dix pour cent — puis le jeu de données de démarrage et le health check. Le rapport de couverture est publié comme **artifact**, téléchargeable.
-> Le deuxième, **lint**, lance pre-commit pour la qualité du code.
-> Le job **security** ne démarre que si les deux premiers réussissent — c'est la directive `needs`. Il construit l'image et la scanne avec Trivy : toute vulnérabilité haute ou critique fait échouer le job.
-> Enfin, **build-and-push** n'exécute que sur la branche main, grâce à `if`. Il se connecte au registre avec le secret `GITHUB_TOKEN`, publie l'image avec deux tags — `latest` et le hash du commit — puis notifie l'application via un webhook.
-> Le principe fondamental : **un job qui échoue bloque toute la suite. Rien ne part en production. »**
+**Texte à dire (≈1min10) :**
+> « Le principe de fonctionnement est simple : **un événement Git déclenche un workflow**.
+> Quand un push ou une pull request arrive, la plateforme GitHub détecte le workflow correspondant — c'est-à-dire qu'elle lit le fichier YAML — puis répartit les jobs sur des **runners**, des machines virtuelles Linux, Windows ou macOS. Chaque job enchaîne ses étapes, et tout — logs, statut, fichiers produits — est tracé et visible dans l'onglet Actions.
+> L'architecture tient donc en trois acteurs : la **plateforme GitHub** qui orchestre, les **runners** qui exécutent, et le **workflow YAML** qui décrit quoi faire.
+> Sur notre projet, un push sur la branche principale déclenche quatre jobs, dont certains en parallèle. Le parallélisme est d'ailleurs un des atouts du principe : les contrôles indépendants ne se font pas attendre les uns les autres. »
 
-**Transition :** « Regardons ce que ça donne concrètement. »
+**Transition :** « Détaillons les composants. »
 
 ---
 
-## Slide 4 — Une exécution en images (3:30 → 4:30)
+## Slide 1.3 — Composants principaux (2:30 → 3:30)
 
-**Contenu de la slide :** 4 screenshots côte à côte
-- Liste des runs (jobs verts, badges ✓)
-- Détail d'un run : arborescence tests / lint / security / build-and-push
-- Logs d'une step (ex. migrations ou coverage)
-- Artifact `coverage-report` + upload SARIF
+**Contenu de la slide :** 7 composants avec un mot clé chacun
+| Composant | Rôle | Exemple réel |
+|---|---|---|
+| **Workflow** | Fichier YAML décrivant l'automatisation | `.github/workflows/ci.yml` |
+| **Déclencheur (`on`)** | Événement qui démarre le workflow | `push` sur main/develop, `pull_request` |
+| **Job** | Ensemble d'étapes sur un runner | `tests`, `lint`, `security` |
+| **Step** | Une commande ou une action | `coverage run manage.py test` |
+| **Action** | Brique réutilisable (Marketplace) | `actions/checkout@v4`, `trivy-action` |
+| **Runner** | Machine d'exécution | `ubuntu-latest` |
+| **Env / Secrets / Artifacts** | Configuration et résultats | `GITHUB_TOKEN`, `coverage.xml`, SARIF |
 
 **Texte à dire (≈1min) :**
-> « En pratique, chaque commit produit une **exécution** visible dans l'onglet Actions : les quatre jobs s'affichent en parallèle puis se rejoignent, avec un statut vert ou rouge.
-> On peut ouvrir chaque job pour voir le détail de ses étapes, chaque étape avec ses logs en temps réel — très utile pour comprendre un échec.
-> Les **artifacts** permettent de récupérer les rapports : ici le rapport de couverture, et là le rapport SARIF de Trivy, automatiquement importé dans l'onglet Security de GitHub — la boucle est bouclée, l'outil CI alimente directement l'outil de suivi de sécurité.
-> Pour le développeur, c'est un retour d'information immédiat : est-ce que mon code est correct ? Y a-t-il une vulnérabilité ? Suis-je bon pour la livraison ? »
+> « Sept composants suffisent pour tout comprendre.
+> Le **workflow**, d'abord : le fichier YAML qui décrit toute l'automatisation. Son **déclencheur**, la clause `on`, qui définit quels événements le lancent. Un workflow contient des **jobs**, exécutés sur des **runners** — chacun définit les **steps** à enchaîner. Une step est soit une commande directe, soit une **action**, une brique réutilisable du Marketplace.
+> Enfin, l'outil gère l'**environnement** : les **secrets** comme le token GitHub, les variables d'**environnement**, et les **artifacts** — des fichiers de sortie téléchargeables, comme le rapport de couverture ou le rapport de sécurité SARIF.
+> Avec ces sept briques, on peut construire n'importe quel pipeline. »
 
-**Transition :** « La sécurité fait partie intégrante de l'outil. »
-
----
-
-## Slide 5 — Sécurité & qualité intégrées (4:30 → 5:30)
-
-**Contenu de la slide :** 4 tuiles
-- **PR checks** : les jobs bloquent le merge d'une pull request (statut requis)
-- **Secrets** : `GITHUB_TOKEN` (rotation auto), variables `env` du workflow, jamais commitées
-- **Trivy** : scan image OS + Python, `exit-code: 1` sur HIGH/CRITICAL, rapport SARIF dans GitHub Security
-- **Dependabot** : PRs automatiques de mise à jour (pip, Docker, Actions) → passent aussi par le pipeline
-- Screenshot : Security tab / dépendances / onglet Secrets
-
-**Texte à dire (≈1min) :**
-> « GitHub Actions ne se limite pas au pipeline : il s'articule avec toute la sécurité de la plateforme.
-> Les **pull requests** sont bloquées tant que les jobs n'ont pas réussi — aucun code non validé ne peut être fusionné.
-> Les **secrets**, comme le `GITHUB_TOKEN`, sont injectés au moment de l'exécution et ne sont jamais exposés dans les logs ou le code.
-> Le scan Trivy est branché directement sur l'onglet Security, via le rapport SARIF : les vulnérabilités sont tracées au même endroit que le code.
-> Et **Dependabot** ouvre automatiquement des pull requests de mise à jour de dépendances — qui passent elles-mêmes par le pipeline avant d'être fusionnées. La sécurité devient un flux continu, pas un contrôle ponctuel. »
-
-**Transition :** « Après cette implémentation, quelles forces et quelles limites de l'outil ? »
+**Transition :** « Passons à la mise en place concrète dans un projet. »
 
 ---
 
-## Slide 6 — Forces & limites de GitHub Actions (5:30 → 6:30)
+# PARTIE 2 — MISE EN PLACE DANS UN PROJET
 
-**Contenu de la slide :** deux colonnes
-- **Forces** : intégration native GitHub (PR, Security, secrets), écosystème Marketplace (Trivy, CodeQL, pre-commit…), workflow-as-code versionné avec le dépôt, aucun serveur à administrer, gratuit pour les repos publics, matrix pour les versions
-- **Limites** : dépendance à l'écosystème GitHub (vendor lock-in), runners partagés (performances variables), coût sur les repos privés, temps de démarrage des jobs, YAML verbeux sur les gros pipelines
-
-**Texte à dire (≈1min) :**
-> « Qu'est-ce que cette expérience m'apprend sur l'outil ?
-> Côté **forces** : l'intégration est native avec l'écosystème GitHub — pull requests, secrets, onglet Security. Le Marketplace fournit des actions prêtes à l'emploi, Trivy, CodeQL, pre-commit, qui évitent de tout réécrire. La configuration étant du code, elle est versionnée, revue et historisée avec le dépôt. Et surtout, aucun serveur à administrer.
-> Côté **limites** : on devient dépendant de l'écosystème GitHub — un changement de plateforme imposerait de réécrire les workflows. Les runners sont partagés, les performances variables. Et sur un dépôt privé, le coût peut devenir significatif.
-> Pour un projet comme celui-ci, les forces l'emportent largement. »
-
-**Transition :** « Terminons par le retour d'expérience concret. »
-
----
-
-## Slide 7 — Retour d'expérience (6:30 → 7:30)
-
-**Contenu de la slide :** 3 bugs réels → comment la CI les a attrapés
-1. **ASGI mal configuré** → l'app ne démarrait pas → attrapé par les tests du job `tests`
-2. **Coroutine jamais exécutée** (Channels 4, `group_send` asynchrone) → détecté par les logs + vérifié en CI
-3. **Ordre des signaux Django** (destinataires M2M absents au `post_save`) → détecté en testant l'envoi multiple, validé par le pipeline
-
-**Texte à dire (≈1min) :**
-> « L'intérêt de l'outil, on le mesure surtout quand ça casse.
-> Premier bug : une configuration ASGI incorrecte faisait échouer l'application au démarrage. C'est le job de tests qui l'a détecté, à chaque commit, avant toute mise en production.
-> Deuxième bug, plus subtil : en Django Channels 4, l'envoi temps réel est asynchrone ; appelé depuis un signal, le message n'était jamais envoyé. C'est l'observation des logs en production qui l'a révélé, puis le correctif a été validé par le pipeline.
-> Troisième bug : lors d'un envoi à plusieurs destinataires, le signal se déclenchait avant l'enregistrement des destinataires. Résolu en écoutant le bon signal, et re-vérifié par la CI.
-> Le point commun : **avec CI/CD, aucun de ces bugs n'a pu arriver en production sans être visible et contrôlé. C'est exactement la valeur de l'outil. »**
-
-**Transition :** « Conclusion. »
-
----
-
-## Slide 8 — Conclusion + questions (7:30 → 8:00)
+## Slide 2.1 — Objectif & pré-requis (3:30 → 4:30)
 
 **Contenu de la slide :**
-- GitHub Actions = CI/CD intégrée au dépôt, workflow-as-code en YAML
-- Bilan : 4 jobs, 3 contrôles bloquants, déploiement automatique, sécurité tracée
-- Chiffres : 34 tests, 94% de couverture, Trivy HIGH/CRITICAL bloquant
-- Perspectives : matrix des versions, déploiement multi-environnements, tests e2e dans le pipeline
+- **Objectif** : automatiser à chaque commit la chaîne complète — tests → qualité → sécurité → build → publication → déploiement — sans intervention manuelle
+- **Pré-requis** :
+  1. Un **dépôt GitHub** (avec son code source)
+  2. Le **code à tester** (ici Django + Docker) — workflow écrit après le Dockerfile/docker-compose
+  3. Un **registre** pour l'image (GHCR) — l'authentification via `GITHUB_TOKEN` (fourni automatiquement)
+  4. **Aucun serveur** — les runners sont hébergés
+- Screenshot : structure du repo (`.github/workflows/ci.yml`)
+
+**Texte à dire (≈1min) :**
+> « Deuxième partie : la mise en place dans un projet, avec le projet Messagerie comme exemple.
+> **L'objectif** : qu'à chaque commit, toute la chaîne s'exécute automatiquement — les tests, la qualité, la sécurité, puis la construction de l'image, sa publication et le déploiement — sans aucune intervention manuelle.
+> Les **pré-requis** sont légers. Il faut un dépôt GitHub avec le code source. Il faut que le projet soit **testable** — ici, un Dockerfile et un docker-compose, qui seront réutilisés dans les jobs. Il faut éventuellement un registre d'images ; GitHub fournit le sien, le GHCR, avec un token d'authentification généré automatiquement.
+> Et c'est tout : pas de serveur à provisionner, les runners sont fournis par GitHub. »
+
+**Transition :** « Concrètement, comment ça se met en place ? »
+
+---
+
+## Slide 2.2 — Étapes de mise en place (4:30 → 6:00)
+
+**Contenu de la slide :** 7 étapes numérotées
+1. **Créer le dossier** `.github/workflows/` à la racine du dépôt
+2. **Écrire le workflow** YAML : nom, déclencheurs `on`, puis les jobs
+3. **Définir chaque job** : runner, steps (actions ou commandes), dépendances `needs`, conditions `if`
+4. **Ajouter les secrets** (Settings → Secrets) — `GITHUB_TOKEN` est automatique
+5. **Pousser le code** → le workflow se lance, vérifier l'onglet Actions
+6. **Protéger les branches** : statuts requis pour le merge des PR
+7. **Itérer** : artifacts, scans de sécurité, Dependabot
+- Exemple : le job `tests` du projet (screenshot YAML) : .env → compose build → migrations → coverage ≥70% → seed data → health check → artifact
+
+**Texte à dire (≈1min30) :**
+> « La mise en place se fait en sept étapes.
+> On crée d'abord le dossier `.github/workflows/` à la racine. On **écrit le workflow** : un nom, les déclencheurs — ici push sur main et develop, pull request vers main — puis les jobs. Chaque job déclare son runner, ses steps, et ses relations : `needs` pour dépendre d'un autre job, `if` pour des conditions.
+> Les **secrets** se configurent dans les paramètres du dépôt ; le plus important, le `GITHUB_TOKEN`, est fourni automatiquement par GitHub à chaque exécution.
+> On **pousse le code**, et le workflow se lance immédiatement — c'est l'onglet Actions qui montre le résultat.
+> Pour un projet d'équipe, on **protège la branche principale** : un job en échec bloque la fusion d'une pull request.
+> Et on **itère** : ici, le job de tests reproduit l'environnement complet — il construit l'image, démarre PostgreSQL, applique les migrations, mesure la couverture avec un seuil bloquant, rejoue le jeu de données et fait un health check, puis publie le rapport de couverture en artifact.
+> En quelques commits, un pipeline complet est en place. »
+
+**Transition :** « Dernière partie : les forces et les limites de l'outil. »
+
+---
+
+# PARTIE 3 — FORCES ET LIMITES
+
+## Slide 3.1 — Les forces de GitHub Actions (4 points) (6:00 → 7:00)
+
+**Contenu de la slide :** 4 points forts
+1. **Intégration native à GitHub** — PR checks, onglet Security, secrets : tout est articulé (le scan Trivy alimente le Security tab via SARIF)
+2. **Écosystème Marketplace** — actions prêtes à l'emploi (checkout, setup-python, Trivy, CodeQL, pre-commit) → on ne réécrit rien
+3. **Workflow-as-code** — la config est du code : versionnée, revue en PR, historisée avec le dépôt
+4. **Zéro infrastructure** — runners hébergés, gratuit sur les dépôts publics, parallélisme des jobs
+
+**Texte à dire (≈1min) :**
+> « Dernière partie : qu'est-ce qui fait la force de GitHub Actions ? Quatre points.
+> Premièrement, **l'intégration native à GitHub** : le pipeline dialogue directement avec les pull requests, les secrets et l'onglet Security — par exemple, le scan Trivy importe son rapport SARIF directement dans le Security tab du dépôt.
+> Deuxièmement, **l'écosystème Marketplace** : des briques réutilisables, `checkout`, `setup-python`, `trivy-action`, `pre-commit` — on assemble plutôt qu'on réécrit.
+> Troisièmement, **le workflow-as-code** : la configuration est du code comme les autres — revue en pull request, versionnée, historisée.
+> Et quatrièmement, **zéro infrastructure** : pas de serveur à héberger, gratuit pour les dépôts publics, et des jobs qui s'exécutent en parallèle pour gagner du temps. »
+
+**Transition :** « Restons honnêtes : l'outil a aussi des limites. »
+
+---
+
+## Slide 3.2 — Les limites (3 points) + conclusion (7:00 → 8:00)
+
+**Contenu de la slide :** 3 limites
+1. **Dépendance à l'écosystème GitHub** (vendor lock-in) — changer de plateforme impose de réécrire les workflows
+2. **Coût et performances sur les dépôts privés** — quota limité gratuit ; runners partagés → performances variables
+3. **Courbe d'apprentissage** — YAML verbeux sur les gros pipelines, débogage des expressions et des conditions
+
+- **Conclusion** : un outil CI/CD complet, intégré, configurable par code — le meilleur rapport simplicité/puissance pour un dépôt hébergé sur GitHub ; les limites restent mineures pour ce type de projet.
 - « Merci — questions ? »
 
-**Texte à dire (≈30s) :**
-> « Pour conclure : GitHub Actions est un outil DevOps complet, intégré au dépôt, qui automatise le cycle de vie du code — tests, qualité, sécurité et livraison — à partir d'un simple fichier YAML versionné.
-> Sur ce projet, il livre un pipeline de quatre jobs aux contrôles bloquants, avec trente-quatre tests, quatre-vingt-quatorze pour cent de couverture et un scan de sécurité qui bloque toute vulnérabilité critique.
-> Les perspectives : tester sur plusieurs versions, déployer sur plusieurs environnements, et intégrer des tests de bout en bout.
+**Texte à dire (≈1min) :**
+> « Trois limites à connaître.
+> D'abord, la **dépendance à l'écosystème GitHub** : la configuration est spécifique à la plateforme, et la quitter imposerait de tout réécrire. Ensuite, sur un **dépôt privé**, la gratuité est limitée et les runners étant partagés, les performances peuvent varier. Enfin, il y a une **courbe d'apprentissage** : les expressions, les conditions et la syntaxe YAML peuvent devenir verbeuses sur les gros pipelines.
+> Pour conclure : GitHub Actions est un outil de CI/CD complet et intégré, où tout se configure par du code. Pour un projet hébergé sur GitHub, c'est probablement le meilleur compromis entre simplicité et puissance — et ses limites restent mineures au regard de ce qu'il automatise.
 > Merci, je vous écoute. »
 
 ---
@@ -188,17 +187,17 @@ push/PR ─▶ ① tests ─┐
 
 - [ ] Vérifier que https://devops-omjy.onrender.com/health/ répond `"status": "ok"`
 - [ ] Screenshots à jour :
-  - Onglet **Actions** : liste des runs + une exécution avec les 4 jobs verts
-  - **YAML** du workflow annoté (extrait `ci.yml`)
+  - Onglet **Actions** : liste des runs + exécution avec les 4 jobs (tests, lint, security, build-and-push)
+  - **YAML** du workflow annoté (`ci.yml`) — étapes, `needs`, `if`, secrets
+  - Structure du dépôt montrant `.github/workflows/ci.yml`
   - **Logs** d'une step (ex. tests + coverage)
   - **Artifact** `coverage-report` + rapport **SARIF** dans Security tab
-  - Onglet **Secrets** et onglet **Dependabot**
-  - Branch protection : statuts requis sur les PR
-- [ ] Répéter le timing : script ≈ 8 min ; prévoir 1 min de marge (visée 7 min)
+  - **Secrets** et **Dependabot**, **branch protection** (status checks requis)
+- [ ] Répéter le timing : Partie 1 ≈ 3min30, Partie 2 ≈ 2min30, Partie 3 ≈ 2min
 - [ ] Avoir le `ci.yml` ouvert sur le dernier commit pour les questions techniques
 - [ ] Questions probables du jury — réponses prêtes :
-  - *« Pourquoi GitHub Actions plutôt que Jenkins ? »* → intégration native, pas d'infra à gérer, marketplace, workflow-as-code ; Jenkins plus flexible/personnalisable mais à auto-héberger
-  - *« Comment déclencher un workflow sur un horaire ? »* → clause `on: schedule` avec cron
-  - *« Comment les jobs s'enchaînent-ils ? »* → `needs` (le job suivant attend les précédents) + `if` (conditions, ex. branche main)
-  - *« Où tournent les jobs ? »* → sur les runners hébergés (ubuntu-latest) ; possibles self-hosted runners
+  - *« Pourquoi GitHub Actions plutôt que Jenkins ? »* → intégration native, pas d'infra à héberger, marketplace, workflow-as-code ; Jenkins plus flexible/personnalisable mais à auto-héberger
+  - *« Comment déclencher un workflow sur un horaire ? »* → clause `on: schedule` avec une expression cron
+  - *« Comment les jobs s'enchaînent-ils ? »* → `needs` (dépendances) + `if` (conditions, ex. branche main)
+  - *« Où tournent les jobs ? »* → runners hébergés (ubuntu-latest) ; possibles runners self-hosted pour le privé
   - *« Comment Trivy bloque-t-il le pipeline ? »* → `exit-code: 1` si vulnérabilité HIGH/CRITICAL → job rouge → les jobs en `needs` ne démarrent pas
